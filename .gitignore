@@ -1,0 +1,15 @@
+.venv/
+.cache/
+build/
+__pycache__/
+*.py[cod]
+.DS_Store
+._*
+# Operational orbit data must be refreshed, not versioned as a current TLE.
+sd-card/IC-705/Apps/ISS.TLE
+# Never publish Icom firmware, decoded images, manuals, dumps or local hardware logs.
+*.dat
+*.bin
+*.elf
+*.o
+*.pdf

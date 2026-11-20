@@ -1,0 +1,30 @@
+# Validation scope
+
+This is an experimental radio application, not a certified or Icom-supported product.
+
+## Observed on a real IC-705 during development
+
+The operator reported:
+
+- Successful launch through SQ6EMM v8 Apps and live GPS coordinates/fix.
+- Verified RX tuning, A/B FM/SPLIT setup, and increasing completed correction cycles.
+- Software-confirmed uplink corrections during operator-controlled TX.
+- Successful return of original settings after STOP in the predecessor standalone build.
+
+Version 0.15.0 is the rename to `ISS.app` / `ISS.CFG` / `ISS.TLE` and the displayed name `ISS tracker`. Its four controller/session object files were byte-identical to the preceding build when checked locally. That is useful regression evidence, but does not turn it into an independently hardware-tested release. The renamed files still need device confirmation.
+
+No independent spectrum/frequency-counter measurement of active-TX Doppler was performed by the development agent. Radio/CI-V readback and a transaction counter do not establish RF accuracy.
+
+## Software checks
+
+Development used compiled ARM execution with simulated ICAP callbacks, CI-V consumer responses and GPS/radio state, including STOP/restoration, TX deferral, VFO mapping and foreign-state preservation. Some original native getter/parser functions were exercised from the user's private firmware image.
+
+Those tests do not emulate the entire IC-705, native scheduling, SD card, power lifecycle, final LCD hardware or RF chain. They are not included as self-contained tests here because the firmware image is not distributed.
+
+Public tests cover TLE input/age/checksum/atomic replacement and the actual C orbital implementation against a Python SGP4 reference. Building checks the ICAP format, CRC and load-window size. None of these makes a different alternative firmware automatically compatible.
+
+## Practical first use
+
+Before relying on tracking, record your initial VFO frequencies/modes/SPLIT, launch the app, check GPS/UTC and corrected frequencies, then STOP and compare the restored settings. Confirm receive operation before an operator-controlled TX check. Do not start or stop a firmware update as part of an application test.
+
+The original issue where power-on required battery removal after an app session was investigated during development. Later standalone builds were reported to shut down/restart normally after completed STOP. This history is not a guarantee for a different firmware, app build, or interrupted STOP.
