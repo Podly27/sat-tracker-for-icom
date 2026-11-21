@@ -1,6 +1,7 @@
 #include "tle_network.h"
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 #define BODY_LIMIT 262144u
 static int numeric_mode;
 static TleConnectDiag connection[2]={{-999,0,0},{-999,0,0}};
@@ -8,14 +9,14 @@ void tle_network_numeric(int enabled){numeric_mode=enabled!=0;}
 const TleConnectDiag *tle_network_diagnostics(void){return connection;}
 static const char *message="NET: NOT STARTED";
 const char *tle_network_status(void){return message;}
-void tle_http_init(TleHttp*p){memset(p,0,sizeof(*p));}
+void tle_http_init(TleHttp*p){memset(p,0,sizeof(*p));memcpy(p->target,"25544",6);}
 static int decimal(const char*s,unsigned*v){
  unsigned n=0;if(*s<'0'||*s>'9')return -1;
  while(*s>='0'&&*s<='9'){if(n>BODY_LIMIT/10)return -1;n=n*10+*s++-'0';if(n>BODY_LIMIT)return -1;}
  if(*s&&*s!='\r')return -1;*v=n;return 0;
 }
-static int check_line(const char*s,char n){
- if(strlen(s)!=69||s[0]!=n||s[1]!=' '||memcmp(s+2,"25544",5))return 0;
+static int check_line(const TleHttp*p,const char*s,char n){
+ if(strlen(s)!=69||s[0]!=n||s[1]!=' '||memcmp(s+2,p->target,5))return 0;
  unsigned sum=0;for(unsigned i=0;i<68;i++){if(s[i]>='0'&&s[i]<='9')sum+=s[i]-'0';else if(s[i]=='-')sum++;}
  return s[68]>='0'&&s[68]<='9'&&sum%10==(unsigned)(s[68]-'0');
 }
@@ -24,13 +25,14 @@ static int body(TleHttp*p,char c){
  if(c=='\n'){
   if(p->line_len&&p->line[p->line_len-1]=='\r')p->line_len--;
   p->line[p->line_len]=0;
-  if(check_line(p->line,'1')){if(p->have_pair)return -1;memcpy(p->first,p->line,70);p->have_first=1;}
-  else if(check_line(p->line,'2')&&p->have_first){if(p->have_pair)return -1;memcpy(p->second,p->line,70);p->have_pair=1;p->have_first=0;}
+  if(p->record){int r=p->record(p->line,p->context);if(r<0||(r&&p->have_pair))return -1;if(r)p->have_pair=1;}
+  else if(check_line(p,p->line,'1')){if(p->have_pair)return -1;memcpy(p->first,p->line,70);p->have_first=1;}
+  else if(check_line(p,p->line,'2')&&p->have_first){if(p->have_pair)return -1;memcpy(p->second,p->line,70);p->have_pair=1;p->have_first=0;}
   else p->have_first=0;
   p->line_len=0;return 0;
  }
  if(c!='\r'&&(c<32||c>126))return -1;
- if(p->line_len>=sizeof(p->line)-1)return -1;p->line[p->line_len++]=c;return 0;
+ if(p->line_len>=(p->record?sizeof(p->line):160)-1)return -1;p->line[p->line_len++]=c;return 0;
 }
 static int headers(TleHttp*p){
  char *s=p->header;
@@ -105,15 +107,13 @@ int tle_network_supported(const Api*a){
  return 0;
 }
 /* Private entry also used by host transport tests after explicit mock binding. */
-int tle_network_fetch_bound(Api*a,TleHttp*p,const char **source){
+static int fetch(Api*a,TleHttp*p,const char **source,uint32_t norad,const char*id,int csv,int(*record)(const char*,void*),void*ctx){
  static const char *hosts[]={"celestrak.org","www.amsat.org"};
  /* Public IPv4 addresses resolved 2026-11-21; diagnostic fixtures, not permanent endpoints. */
  static const char *ips[]={"104.168.149.178","104.20.25.253"};
  memset(connection,0,sizeof(connection));connection[0].result=connection[1].result=-999;
- static const char *requests[]={
-  "GET /NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE HTTP/1.1\r\nHost: celestrak.org\r\nUser-Agent: ISS-tracker/0.17-probe\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n",
-  "GET /tle/current/nasabare.txt HTTP/1.1\r\nHost: www.amsat.org\r\nUser-Agent: ISS-tracker/0.17-probe\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n"};
- for(unsigned i=0;i<2;i++){
+ char request[256];
+ for(unsigned i=0;i<(csv?1u:2u);i++){
   if(a->stop()){message="NET: CANCELLED";return -2;}
   if(a->net_ready()!=0){message="NET: OFFLINE";return -1;}
   *source=hosts[i];message="NET: HTTPS CONNECT";a->line(3,hosts[i]);a->line(4,message);
@@ -123,13 +123,15 @@ int tle_network_fetch_bound(Api*a,TleHttp*p,const char **source){
   int fd=a->net_connect(numeric_mode?ips[i]:hosts[i],443,1,10000);
   connection[i].result=fd;connection[i].error=fd<0&&a->net_error?a->net_error():0;connection[i].elapsed=a->ticks()-connect_start;
   if(fd<0){message="NET: CONNECT FAILED";continue;}
+  if(!i)snprintf(request,sizeof(request),"GET /NORAD/elements/gp.php?CATNR=%lu&FORMAT=%s HTTP/1.1\r\nHost: celestrak.org\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n",(unsigned long)norad,csv?"CSV":"TLE");
+  else snprintf(request,sizeof(request),"GET /tle/current/nasabare.txt HTTP/1.1\r\nHost: www.amsat.org\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n");
   unsigned start=a->ticks(),sent=0;int bad=0;
-  while(sent<strlen(requests[i])){
+  while(sent<strlen(request)){
    if(a->stop()||a->ticks()-start>20000){bad=1;break;}
-   int n=a->net_send(fd,requests[i]+sent,strlen(requests[i])-sent,500);
-   if(n<=0||(unsigned)n>strlen(requests[i])-sent){bad=1;break;}sent+=n;
+   int n=a->net_send(fd,request+sent,strlen(request)-sent,500);
+   if(n<=0||(unsigned)n>strlen(request)-sent){bad=1;break;}sent+=n;
   }
-  tle_http_init(p);char buffer[256];message="NET: READING TLE";a->line(4,message);
+  tle_http_init(p);memcpy(p->target,id,6);p->record=record;p->context=ctx;char buffer[256];message="NET: READING TLE";a->line(4,message);
   while(!bad&&!p->complete){
    if(a->stop()||a->ticks()-start>20000){bad=1;break;}
    int n=a->net_recv(fd,buffer,sizeof(buffer),500);
@@ -145,6 +147,8 @@ int tle_network_fetch_bound(Api*a,TleHttp*p,const char **source){
  }
  return -1;
 }
+int tle_network_fetch_bound(Api*a,TleHttp*p,const char**source){return fetch(a,p,source,25544,"25544",0,0,0);}
+int tle_network_fetch_sat(Api*a,TleHttp*p,const char**source,uint32_t n,const char*id,int csv,int(*record)(const char*,void*),void*ctx){if(!tle_network_supported(a))return -1;return fetch(a,p,source,n,id,csv,record,ctx);}
 int tle_network_fetch(Api*a,TleHttp*p,const char **source){
  if(!tle_network_supported(a)){message="NET: UNSUPPORTED API";return -1;}
  return tle_network_fetch_bound(a,p,source);

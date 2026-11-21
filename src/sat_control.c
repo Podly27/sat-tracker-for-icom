@@ -3,6 +3,7 @@
  */
 #include "sat_control.h"
 #include "civ_queue.h"
+#include "profile.h"
 #include "tuner.h"
 #include "radio_mode.h"
 #ifdef ISS_TX_CONTROL
@@ -76,7 +77,7 @@ const char *sat_control_tick(Api*a,uint32_t down,uint32_t up,int gps,int orbit,i
  if(ready&&!phase&&now-last_at>=500&&(!resume_until||(int32_t)(now-resume_until)>=0)&&diff(r.main,rx_hz)>10){failure="SAT STOP: MANUAL CHANGE";return failure;}
  if(!gps)return "SAT HOLD: WAIT GPS";
  if(!orbit)return "SAT HOLD: TLE/TIME";
- if(down<437770000u||down>437830000u||up<145980000u||up>145999999u){failure="SAT STOP: TARGET RANGE";return failure;}
+ if(!profile_target(0,down)||!profile_target(1,up)){failure="SAT STOP: TARGET RANGE";return failure;}
  if(!ready){
   if(step==0){init_rx=down;init_up=up;}
   int result=step==3?civ_owned_rx_begin(&t,init_rx):step==4?civ_owned_up_begin(&t,init_up):
@@ -112,4 +113,16 @@ void sat_control_finish(Api*a){
   sat_control_tick(a,0,0,0,0,1);
   if((t.active&&!failure)||(selected_b&&!t.active&&!restore_failed))a->sleep(50);
  }
+}
+
+int sat_control_profile(Api*a,uint32_t rx,uint32_t up,unsigned tone){
+ RadioState r;if(!profile_valid(rx,up,tone)||a->radio_state(&r)||r.tx)return -1;
+ sat_control_finish(a);
+ if(t.active||selected_b)return -1;
+#ifdef ISS_TX_CONTROL
+ if(tx_control_reset())return -1;
+#endif
+ profile_set(rx,up,tone);step=action=ready=selected_b=restore_failed=phase=0;
+ sent_at=last_at=init_rx=init_up=cycle_rx=cycle_up=rx_hz=up_hz=acks=resume_until=0;
+ failure=saved_failure=0;return 0;
 }

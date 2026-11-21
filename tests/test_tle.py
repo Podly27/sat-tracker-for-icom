@@ -37,4 +37,19 @@ class TLETests(unittest.TestCase):
     text,_,_=tle.extract('<html>unavailable</html>',self.now);tle.save_atomic(p,text)
    except tle.TLEError:pass
    self.assertEqual(p.read_text(),'keep me')
+class MultiUpdateTests(unittest.TestCase):
+ def test_configured_bundle_and_omm(self):
+  profiles=tle.configuration(ROOT/'sd-card/IC-705/Apps/SAT.CFG');self.assertEqual([p[0]for p in profiles],['ISS','SO-50','AO-91','AO-123','SO-131'])
+  fixture=(ROOT/'tests/fixtures/multisat-historical.tle').read_text();now=dt.datetime(2026,11,21,8,tzinfo=dt.timezone.utc)
+  for name,norad in profiles:
+   if norad<100000:self.assertIn('1 '+str(norad),tle.extract(fixture,now,norad=norad)[0])
+   else:
+    text=(ROOT/'tests/fixtures/so131-historical.csv').read_text();record,_,_=tle.extract_csv(text,norad,now);self.assertTrue(record.startswith('CSV,UNNE-1B'))
+ def test_invalid_csv_and_config(self):
+  text=(ROOT/'tests/fixtures/so131-historical.csv').read_text();now=dt.datetime(2026,11,21,8,tzinfo=dt.timezone.utc)
+  with self.assertRaises(tle.TLEError):tle.extract_csv(text,101102,now)
+  with self.assertRaises(tle.TLEError):tle.extract_csv(text.replace('2026-11-20','2026-02-31'),101101,now)
+  with tempfile.TemporaryDirectory()as directory:
+   path=Path(directory)/'SAT.CFG';path.write_text('TEST,12345,436.0,145.9,66.6')
+   with self.assertRaises(tle.TLEError):tle.configuration(path)
 if __name__=='__main__':unittest.main()

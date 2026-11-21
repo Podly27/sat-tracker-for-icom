@@ -96,3 +96,15 @@ Compiled ARM tests execute actual display publication and radio-control/session 
 ### Hardware feedback — 2026-11-21
 
 After installing SAT 0.22.0, the owner confirms that STOP no longer freezes the radio and that everything works as expected. This confirms the reported outcome on that IC-705/v8 setup; the exact native UI failure mechanism has not been isolated.
+
+## 0.23.0 configurable multi-satellite tracking
+
+Default profiles are ISS, SO-50, AO-91, AO-123 and SO-131, ordered by priority in SAT.CFG. The current AMSAT AO-91 page specifies carrier-operated/no CTCSS, so its default is 0; SO-131 also uses 0. ISS/SO-50/AO-123 use 67 Hz. SO-50 activation remains operator-managed.
+
+Forty-five host test methods pass. New scenarios cover strict configuration, duplicate/invalid/too many entries, overlap priority and earliest future AOS, cache selection, partial download success, offline use, partial writes, readback failure, cancellation, and cooperative prediction for five real historical records. Independent Python SGP4 comparisons cover all five satellites over ±24 hours at four locations (including the generated near-earth-only build). OMM/CSV output agrees within 1 m range, 1e-5 km/s range rate and 1 Hz Doppler in that grid. Malformed IDs, UTC dates, non-finite/scientific fields and unsupported orbits are rejected. Historical fixtures are actual AMSAT/CelesTrak records retrieved 2026-11-21; synthetic epoch changes exist only inside isolated refresh tests.
+
+Private-v8 ARM tests use actual application/controller/session code and native display notification, with mocked orbit geometry/clock/card and CI-V replies. Each default profile reaches its expected A/B frequencies, FM/SPLIT and configured tone state. A simulated AO-91 TX case applies moving UHF uplink corrections using only allowed read requests and frequency writes; no PTT or tone/VFO configuration commands occur during TX. Priority tests switch SO-50 to ISS, including a deferred switch after PTT release. Another case switches AO-91 to higher-priority SO-131, swapping bands and clearing the TX-tone enable. The original radio snapshot survives these changes. Normal STOP restores original frequencies/modes/selection/SPLIT, clears owned text without native notifications, and returns in 1,550 simulated ms.
+
+Separate ARM startup tests use real TLE/OMM parsing and SGP4 initialization with simulated HTTPS/card I/O: fresh cache makes zero connections; refreshing five profiles makes five connections/closes, writes and validates the alternate complete bundle, and preserves the original source. STOP before completed prediction makes no CI-V commands. Maximum observed stack use is 4,616 of 8,192 bytes.
+
+Multi-satellite hardware operation has not yet been verified. Earlier 0.22 STOP behavior was confirmed by the owner; this version retains its no-native-redraw cleanup and single-session restoration design. Real scheduling, TLS peer behavior, RF changes and actual contact success remain outside these simulations.

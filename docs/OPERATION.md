@@ -1,66 +1,33 @@
-# Operating the standalone application
+# Operating SAT
 
-## Start
+Requires IC-705 E with SQ6EMM `705E140_20261119v8`. Other firmware versions are not automatically compatible. Set the clock to UTC and enable internal GPS. Begin in VFO A/B with duplex off.
 
-Use the supported SQ6EMM v8 firmware. Set the radio clock to UTC, enable the internal GPS and obtain a valid fix. Start from VFO A or B with DUP+ and DUP− off. The app refuses an unsupported starting context rather than guessing the original state.
-
-Choose `MENU → SET → Apps → SAT.app`. Its displayed name is `satellites`. Give it time to capture the original settings, establish GPS/time/TLE validity and set the profile; avoid changing settings during initialization.
-
-The tracker sets A/B to FM, RX A around 437.800 MHz and TX B around 145.990 MHz, CTCSS 67.0 Hz on the uplink, TSQL off, simplex on both VFOs and SPLIT on. These are automatic radio configuration changes; it does not key PTT.
+1. Place `SAT.app` and `SAT.CFG` in `IC-705/Apps/`; keep older tracker executables outside that folder.
+2. Connect Wi-Fi for initial orbital downloads, or supply a valid combined `SAT.TLE` for offline use.
+3. Start **MENU → SET → Apps → SAT.app**.
+4. Startup checks configuration and per-satellite orbit age, refreshes missing/stale data and calculates current/future passes. No radio settings are captured or changed before initial prediction completes.
+5. The selected satellite is configured automatically: **VFO A = RX**, **VFO B = TX**, FM, SPLIT and the configured TX tone. Selection follows [configuration priority](CONFIG.md).
 
 ## Display
 
-The [radio photograph](images/iss-tracker-radio.png) shows an actual ISS pass on an earlier build labelled `SATELITE`. The current app is named `SAT`. The photographed values are historical, not live telemetry.
+The Apps window shows the satellite name, UTC/GPS status, azimuth from true north, elevation, distance, RX/TX frequencies, pass status and tone. `Waiting for GPS` precedes a valid position. `Waiting for SO-131 DD.MM. HH:MM` gives the next AOS in UTC; `SO-131 pass: N min left` rounds remaining time up. Horizon estimates use 30-second sampling.
 
-- **BELOW / IN RANGE:** calculated elevation below/above the geometric horizon. This is not a received-signal indicator or a guarantee that the repeater is on.
-- **AZ:** direction from true north, clockwise in degrees. **EL:** elevation in degrees; negative values are below the horizon.
-- **km:** slant range to ISS, not ground-track distance.
-- **RX A / TX B:** corrected frequencies. Startup can show computed targets; after controller/readback activity the fields use the app's last confirmed values. They are not an RF counter measurement.
-- **Waiting / pass status:** `Waiting for ISS DD.MM. HH:MM` gives the next rise in UTC. `ISS pass: N min left` counts down to the estimated end, rounding up to whole minutes. Predictions use 30-second sampling. A new search begins after horizon loss. The app initially shows search progress.
-- **GPS:** a fix is required. When GPS or time/TLE validity is lost, new tuning commands are paused; this does not constitute a hardware transmit inhibit.
+The same waiting/pass message scrolls through the native 13-character receiver-status field below the main frequency. The radio adds `RX:` itself. Native status publication pauses during TX/non-FM; it is not a received-signal or successful-contact indicator. The ordinary modulation label remains FM, not SAT. There is no DECODE-area overlay or graphical compass.
 
-Observer coordinates and ACK/debug counters are intentionally hidden in this version. Operational errors can still be shown. The ordinary radio screen continues to say FM; this release does not provide a native SAT mode label or DECODE-area overlay. Version 0.20.0 does provide scrolling native receiver-status text.
+A visible satellite wins over a future one. Overlaps use the first enabled configuration row. Otherwise the earliest AOS wins. A pending satellite switch waits until RX; `NAME waits for RX` identifies that destination. Orbital availability, geometric visibility and actual repeater operation are separate things.
 
-## Doppler and operator-controlled TX
+## Doppler and transmission
 
-During RX the app periodically corrects both directions using an owned CI-V transaction/readback cycle. RX cycles are rate-limited with a minimum two-second interval after a completed cycle, plus transaction latency.
+RX control periodically updates both frequencies using owned CI-V request/readback cycles. During operator-controlled TX, only the verified uplink frequency is changed; no VFO/mode/tone/SPLIT configuration changes are made. The app never keys PTT. A/B swap, manual frequency edits or mismatched readback can stop automatic control; STOP and restart establish a new session.
 
-While the operator transmits, the controller verifies the selected/unselected VFO mapping and SPLIT, then only updates the uplink frequency. These writes are limited to at most one per second plus readback latency. It does not change VFO selection, tones, modes or SPLIT during active TX, and never sends a PTT command.
+SO-50's separate 74.4 Hz activation remains manual. AO-91's default is no CTCSS and sunlight-only operation; no eclipse filter is implemented. See [profile notes](CONFIG.md).
 
-A supported TX-frequency read is used when available. Some firmware rejects it; then the app relies on B-VFO readback. That fallback does not independently prove that the emitted RF changed. A/B swap, manual edits or unexpected readback can stop control. Use STOP and restart the app to establish a fresh session.
+## EXIT and STOP
 
-## EXIT, STOP and restoration
+**EXIT hides the window and leaves tracking running.** Reopen through Apps.
 
-**EXIT hides the window and keeps the app running.** Reopen it through Apps.
+**STOP ends tracking and restores the original session settings**, including both VFO frequencies, mode/data/filter, CTCSS frequency/on-off, tone squelch, simplex, selected VFO and SPLIT. The snapshot is taken once per session and retained across satellite changes. Settings are re-read to verify restoration. Release PTT and wait for complete app exit before switching off or removing SD.
 
-**STOP in Apps ends the session.** Release PTT and wait for complete exit before removing the card or switching power. Restoration returns:
+STOP phases are `Drain radio commands`, `Release status text`, and `Restore radio settings`. Display cleanup blanks only app-owned characters and makes no native redraw calls or stale UI-flag restoration. This retains the 0.22 hardware-confirmed freeze fix. The original received label is not replayed. If restoration cannot complete, check the radio; a crash, held PTT or loss of power can prevent it. The RAM snapshot is not a full radio backup.
 
-- Both VFO frequencies and mode/data/filter values.
-- CTCSS frequency, tone enable and tone-squelch state on each VFO.
-- Simplex, the originally selected VFO and SPLIT.
-
-The app re-reads settings to verify restoration. It waits for RX rather than restoring settings during TX. This is bounded; if restoration fails or PTT remains held, an incomplete-restore message is shown. Check the radio instead of treating that as success.
-
-The snapshot is volatile RAM. Removing power, a crash or interrupted shutdown can prevent restoration; the app does not provide a full radio backup or persistent recovery mechanism.
-
-## Startup sequence (0.18.0)
-
-Startup checks radio UTC and the epochs in `SAT.TLE`, `SAT.BAK` and the legacy `SATELITE.TLE`. It selects the usable candidate closest to radio UTC. If none is usable, or the selected elements are more than 24 hours from UTC, it tries a hostname-based HTTPS update. Valid elements already within 24 hours skip the network request.
-
-Downloaded elements must pass checksums, NORAD identity, orbit initialization and a 24-hour epoch limit. The app saves them into the alternate `SAT.TLE` / `SAT.BAK` slot and verifies the bytes by reopening it. The selected valid file is never opened for writing. There is no rename/fsync API, so this is a recoverable two-slot cache, not a claim of atomic FAT updates or immunity to card/power failure. If saving fails, verified downloaded data can still be used in RAM for that session.
-
-When networking fails, a validated cached orbit within seven days can be used offline. If no usable orbit exists, no radio control starts. UTC changes or an expired cache pause control; restart to perform a new startup download attempt. Online checks run at startup only.
-
-After loading TLE, the app waits for internal GPS and computes the next AOS/LOS before starting its existing radio-control session. STOP during startup cancels before radio settings are captured or changed. The integrated update/save path has host and simulated ARM validation; it still needs a device run. The separate DNS and numeric-IP HTTPS probes have both downloaded and validated a fresh ISS TLE on the owner's IC-705.
-
-Version 0.19.0 displays these statuses inside the Apps window only. FRQTEXT is a separate diagnostic: text visibility is confirmed, but STOP freezes the radio on the owner's device. It is not linked into SAT.app. ISS restoration remains the existing controller path.
-
-## 0.20.0 native status and renamed files
-
-Use `SAT.app`. The app loads `SAT.TLE` / `SAT.BAK`; old `ISS.*` or `SATELITE.*` names are not read by this build. Existing valid files should be migrated without editing the orbital elements. `SAT.CFG` remains unused; renaming the app does not enable other satellites.
-
-The GPS-wait message is `Waiting for GPS`. In FM/RX, waiting and pass status also scroll below the normal frequency through a 13-character field. EXIT leaves this running. During TX, no native status is published. STOP ends radio control, performs paced native display cleanup (about 4.5 seconds), then verifies original radio-setting restoration. Wait for the app to fully exit. `SAT.LOG` holds the last closed display-cleanup stage (1–6); it is overwritten rather than grown.
-
-## 0.21.0 STOP correction (supersedes paced-cleanup instructions)
-
-The active filenames are SAT.app / SAT.CFG / SAT.TLE / SAT.BAK and the display name is SAT. The native receiver-status field and GPS/pass messages remain. The v8 loader force-kills apps that do not finish STOP within approximately three seconds when its native I/O guard is clear. The 0.20.0 debug cleanup took at least 4.5 seconds and could prevent radio-setting restoration. It has been replaced by immediate owned-cache restoration and redraw, with no diagnostic SD writes or intentional sleep in display cleanup. Restoration polling is 10 ms. No SAT.LOG is created by this version; older logs are archived. Original settings are still read back for verification.
+Multi-satellite changes in 0.23 have software/ARM validation and still require on-radio verification. The [earlier photograph](images/iss-tracker-radio.png) shows an older single-ISS build, not the current UI.

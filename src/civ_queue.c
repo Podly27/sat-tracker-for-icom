@@ -4,6 +4,7 @@
  * calibration, arbitrary memory writes or arbitrary CI-V command interface.
  */
 #include "civ_queue.h"
+#include "profile.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -127,7 +128,7 @@ int civ_iss_frequency(unsigned unselected,uint32_t hz){
  return publish(data,7);
 }
 static int owned_frequency(CivOwned *t,unsigned up,uint32_t hz){
- if((!up&&(hz<437770000u||hz>437830000u))||(up&&(hz<145980000u||hz>145999999u)))return -2;
+ if(!profile_target(up,hz))return -2;
  uint8_t data[7]={0x25,(uint8_t)up};
  for(unsigned i=2;i<7;i++){unsigned p=hz%100;data[i]=(p/10)*16+p%10;hz/=100;}
  return owned_begin(t,data,7,0);
@@ -160,14 +161,17 @@ static int profile_publish(CivOwned*t,const uint8_t*p,unsigned n){return t?owned
 static int profile_send(CivOwned*t,unsigned step){
 
  static const uint8_t a[]={7,0},b[]={7,1},fm0[]={0x26,0,5,0,1},fm1[]={0x26,1,5,0,1};
- static const uint8_t tone[]={0x1b,0,0,6,0x70},ton[]={0x16,0x42,1},tsqoff[]={0x16,0x43,0};
+ static const uint8_t tsqoff[]={0x16,0x43,0};
+ unsigned tone=profile_tone?profile_tone:670;
+ uint8_t tone_data[]={0x1b,0,0,(uint8_t)(((tone/1000)<<4)|((tone/100)%10)),(uint8_t)((((tone/10)%10)<<4)|(tone%10))};
+ uint8_t ton[]={0x16,0x42,(uint8_t)(profile_tone!=0)};
  static const uint8_t simplex[]={0x0f,0x10},split[]={0x0f,1};
  switch(step){
  case 0:return profile_publish(t,a,sizeof(a));
  case 3:return profile_publish(t,fm0,sizeof(fm0));
  case 4:return profile_publish(t,fm1,sizeof(fm1));
  case 5:return profile_publish(t,b,sizeof(b));
- case 6:return profile_publish(t,tone,sizeof(tone));
+ case 6:return profile_publish(t,tone_data,sizeof(tone_data));
  case 7:return profile_publish(t,ton,sizeof(ton));
  case 8:case 10:return profile_publish(t,tsqoff,sizeof(tsqoff));
  case 9:return profile_publish(t,a,sizeof(a));

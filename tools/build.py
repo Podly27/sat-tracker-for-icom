@@ -13,12 +13,17 @@ def main():
  # Generate target libc/compiler archives in an isolated, repository-local cache.
  cache.mkdir(exist_ok=True);bootstrap=out/'toolchain-check.c';bootstrap.write_text('int main(void){return 0;}\n')
  subprocess.run(cc+flags+[str(bootstrap),'-static','-o',str(out/'toolchain-check.elf')],check=True,env=env)
- sources=['src/app.c','src/satellite_display.c','src/aprs_status.c','src/pass_status.c','src/tle_store.c','src/tle_network.c','src/orbit.c','src/gps.c','src/civ_queue.c','src/tiny.c','src/sat_control.c','src/tx_control.c','src/radio_session.c','vendor/sgp4/SGP4.c'];objects=[]
+ sources=['src/app.c','src/catalog.c','src/profile.c','src/satellite_display.c','src/aprs_status.c','src/pass_status.c','src/tle_network.c','src/orbit.c','src/gps.c','src/civ_queue.c','src/tiny.c','src/sat_control.c','src/tx_control.c','src/radio_session.c','vendor/sgp4/SGP4.c'];objects=[]
  if args.probe:sources=['src/network_probe.c','src/tle_network.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
  if args.display_probe:sources=['src/display_probe.c','src/gps.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
  if args.frq_probe:sources=['src/frq_text_probe.c','src/aprs_status.c','src/gps.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
  for name in sources:
-  obj=out/(Path(name).stem+'.o');subprocess.run(cc+flags+['-c',str(ROOT/name),'-o',str(obj)],check=True,env=env);objects.append(str(obj))
+  source=ROOT/name
+  if name=='vendor/sgp4/SGP4.c':
+   code=source.read_text();assert code.count("if ((2 * pi / satrec->no_unkozai) >= 225.0)")==1
+   code=code.replace("if ((2 * pi / satrec->no_unkozai) >= 225.0)","if (0 /* SAT validates 80-110 minute near-earth orbits */)").replace("if (satrec->method == 'd')","if (0 /* near-earth only */)")
+   source=out/'SGP4-near-earth.c';source.write_text(code)
+  obj=out/(Path(name).stem+'.o');subprocess.run(cc+flags+['-c',str(source),'-o',str(obj)],check=True,env=env);objects.append(str(obj))
  libraries=[]
  for name in ['libc.a','libzigc.a','libcompiler_rt.a']:
   candidates=list((cache/'zig-global').glob('o/*/'+name))
@@ -39,5 +44,5 @@ def main():
    header[40:56]=b'ISS DISPLAY\0'.ljust(16,b'\0');app=bytes(header)+image
   if args.frq_probe:
    header[40:56]=b'FRQ TEXT TEST\0'.ljust(16,b'\0');app=bytes(header)+image
-  (out/('FRQTEXT.app' if args.frq_probe else 'DISPCHK.app' if args.display_probe else 'TLEIP.app' if args.probe_ip else 'TLEDNS.app' if args.probe else 'SAT.app')).write_bytes(app);report={'version':'frq-test-6-stop-debug' if args.frq_probe else '0.17.0-probe' if args.probe or args.display_probe else '0.22.0','display_name':'FRQ TEXT TEST' if args.frq_probe else 'ISS DISPLAY' if args.display_probe else 'TLE HTTPS IP' if args.probe_ip else 'TLE HTTPS DNS' if args.probe else 'SAT','code_bytes':len(image),'bss_bytes':bss,'stack_bytes':8192,'target':('IC-705 705E140 / SQ6EMM v8/v14 APRS display-cache probe' if args.frq_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 native text dialog probe' if args.display_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 network probe' if args.probe else 'IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405'),'sha256':hashlib.sha256(app).hexdigest()};(out/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+  (out/('FRQTEXT.app' if args.frq_probe else 'DISPCHK.app' if args.display_probe else 'TLEIP.app' if args.probe_ip else 'TLEDNS.app' if args.probe else 'SAT.app')).write_bytes(app);report={'version':'frq-test-6-stop-debug' if args.frq_probe else '0.17.0-probe' if args.probe or args.display_probe else '0.23.0','display_name':'FRQ TEXT TEST' if args.frq_probe else 'ISS DISPLAY' if args.display_probe else 'TLE HTTPS IP' if args.probe_ip else 'TLE HTTPS DNS' if args.probe else 'SAT','code_bytes':len(image),'bss_bytes':bss,'stack_bytes':8192,'target':('IC-705 705E140 / SQ6EMM v8/v14 APRS display-cache probe' if args.frq_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 native text dialog probe' if args.display_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 network probe' if args.probe else 'IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405'),'sha256':hashlib.sha256(app).hexdigest()};(out/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 if __name__=='__main__':main()

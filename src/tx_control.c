@@ -5,6 +5,7 @@
  */
 #include "tx_control.h"
 #include "civ_queue.h"
+#include "profile.h"
 #include "tuner.h"
 #include <stdio.h>
 enum {MAP_SPLIT,MAP_RX,MAP_UP,MAP_TX,UPDATE,VERIFY_UP,VERIFY_TX};
@@ -14,7 +15,7 @@ static uint32_t sent_at,last_at,rx_sample,up_sample,up_hz,target,updates;
 static const char *failure;
 static char text[32];
 static uint32_t diff(uint32_t a,uint32_t b){return a>b?a-b:b-a;}
-static int valid_mapping(uint32_t rx){return diff(rx_sample,rx)<=10&&up_sample>=145980000u&&up_sample<=145999999u;}
+static int valid_mapping(uint32_t rx){return diff(rx_sample,rx)<=10&&profile_target(1,up_sample);}
 int tx_control_busy(void){return seen_tx||t.active;}
 uint32_t tx_control_up(void){return up_hz;}
 uint32_t tx_control_verified(void){return updates;}
@@ -64,7 +65,7 @@ const char *tx_control_tick(Api*a,uint32_t up,int gps,int orbit,int stopping,uin
  int result;
  if(phase==UPDATE){
   if(!gps||!orbit)return "TX HOLD: GPS/TLE";
-  if(up<145980000u||up>145999999u){failure="TX STOP: TARGET RANGE";return failure;}
+  if(!profile_target(1,up)){failure="TX STOP: TARGET RANGE";return failure;}
   uint32_t wanted=((up+5)/10)*10;
   if(now-last_at<1000||(!first_write&&wanted==target)){
    snprintf(text,sizeof(text),tx_read_supported?"TX DOPPLER / OK %lu":"TX B DOPPLER / OK %lu",(unsigned long)updates);return text;
@@ -83,3 +84,5 @@ void tx_control_finish(Api*a,uint32_t rx){
   if(t.active&&!failure)a->sleep(50);
  }
 }
+
+int tx_control_reset(void){if(t.active)return -1;phase=pending=seen_tx=first_write=0;tx_read_supported=1;sent_at=last_at=rx_sample=up_sample=up_hz=target=updates=0;failure=0;return 0;}

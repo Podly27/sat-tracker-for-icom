@@ -14,3 +14,15 @@ int snprintf(char*b,size_t cap,const char*f,...){va_list ap;va_start(ap,f);size_
  else if(t=='%')ch(b,cap,&n,'%');
  }if(cap)b[n<cap?n:cap-1]=0;va_end(ap);return n;
 }
+/* Bounded firmware workloads do not need the host libc's vector string
+ * machinery. Keep these byte routines freestanding and deterministic. */
+void *memcpy(void*d,const void*s,size_t n){unsigned char*a=d;const unsigned char*b=s;for(size_t i=0;i<n;i++)a[i]=b[i];return d;}
+void *memset(void*d,int c,size_t n){unsigned char*a=d;for(size_t i=0;i<n;i++)a[i]=(unsigned char)c;return d;}
+int memcmp(const void*a,const void*b,size_t n){const unsigned char*x=a,*y=b;for(size_t i=0;i<n;i++)if(x[i]!=y[i])return (int)x[i]-y[i];return 0;}
+size_t strlen(const char*s){size_t n=0;while(s[n])n++;return n;}
+int strcmp(const char*a,const char*b){while(*a&&*a==*b){a++;b++;}return (unsigned char)*a-(unsigned char)*b;}
+int strncmp(const char*a,const char*b,size_t n){for(size_t i=0;i<n;i++){unsigned char x=a[i],y=b[i];if(x!=y)return (int)x-y;if(!x)return 0;}return 0;}
+char *strchr(const char*s,int c){for(;;s++){if((unsigned char)*s==(unsigned char)c)return (char*)s;if(!*s)return 0;}}
+char *strstr(const char*s,const char*p){if(!*p)return (char*)s;for(;*s;s++){size_t i=0;while(p[i]&&s[i]==p[i])i++;if(!p[i])return (char*)s;}return 0;}
+
+char *strcpy(char*d,const char*s){char*out=d;do{*d++=*s;}while(*s++);return out;}

@@ -21,7 +21,7 @@ Zig's target libc/compiler archives are generated in the isolated `.cache/` dire
 
 Only the target executable is built; it is never run as a Linux program. The app uses the ICAP/native radio bindings, not Linux syscalls or a host runtime. No supplied Icom firmware is needed to build this repository.
 
-The prebuilt `sd-card/IC-705/Apps/SAT.app` is the version 0.21.0 standalone artifact. Hashes in `sd-card/SHA256SUMS.txt` identify shipped files. A fresh libc archive/link can produce different function ordering and a different final hash; **bit-for-bit reproducibility is not claimed**.
+The prebuilt `sd-card/IC-705/Apps/SAT.app` is the version 0.23.0 standalone artifact. Hashes in `sd-card/SHA256SUMS.txt` identify shipped files. A fresh libc archive/link can produce different function ordering and a different final hash; **bit-for-bit reproducibility is not claimed**.
 
 ## Tests
 
@@ -48,3 +48,7 @@ docs/                      English operating/build/TLE notes and preview
 ```
 
 The experimental custom native-panel firmware and its app bridge are intentionally outside this repository. Do not add firmware `.dat`, decoded `.bin`, full flash dumps, manuals, local serial logs or photos with observer coordinates.
+
+## Multi-satellite memory budget
+
+Version 0.23 uses byte-oriented freestanding string/memory helpers instead of large target-libc vector routines. The build generates `SGP4-near-earth.c` from the unmodified vendored source, removing only deep-space branches; both TLE and OMM entry points reject orbits outside 80–110 minutes. The generated artifact is not a general deep-space SGP4 library. Tests compare this variant against independent Python SGP4 for all five default satellites. Eight fixed profile slots and two Orbit workspaces avoid heap allocation; the same ICAP code+BSS and stack limits apply.

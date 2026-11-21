@@ -1,68 +1,39 @@
-# ISS orbital data: SAT.TLE
+# Orbital data: SAT.TLE and SAT.BAK
 
-The application needs a real ISS **NORAD 25544** TLE pair. It does not need a TLE for another satellite or a location file. Your observer position comes from the radio's internal GPS.
+SAT 0.23 reads the enabled profiles in `SAT.CFG` and loads orbital data for each satellite. GPS supplies your location; it cannot supply satellite orbital elements.
 
-## Recommended method
+At startup, missing records or epochs more than **24 hours** from radio UTC trigger HTTPS refresh. Five-digit catalog numbers use [CelesTrak TLE](https://celestrak.org/NORAD/elements/) with [AMSAT](https://www.amsat.org/tle/current/nasabare.txt) as fallback. Six-digit numbers, including SO-131 / 101101, use CelesTrak's **OMM CSV** because its TLE feed does not carry those objects. See [CelesTrak's format documentation](https://celestrak.org/NORAD/documentation/gp-data-formats.php).
 
-Run `python3 tools/update_tle.py` from the repository. It uses:
+## Combined cache
 
-1. [CelesTrak ISS TLE request](https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE).
-2. [AMSAT current orbital elements](https://www.amsat.org/tle/current/nasabare.txt), as a fallback/extraction source.
+`SAT.TLE` remains the filename, but it is now a combined application cache. Ordinary objects use a name followed by their original two 69-column TLE lines. Six-digit objects use a name followed by `CSV,` and the original CelesTrak CSV data record. This is **not a pure TLE file** for importing into arbitrary third-party trackers. The app directly initializes SGP4 from OMM mean elements; it does not fabricate or re-encode them as TLEs.
 
-A source can be unavailable, rate-limited or return an error page. The tool validates content before replacing the destination. It performs a single request per source, not continuous polling.
+Each record is checked for catalog identity, epoch, supported orbit and successful propagation initialization. TLEs additionally require their standard checksums. CSV records use the documented 17-field CelesTrak layout and strict numeric/date validation. Only 80–110 minute LEOs are supported.
 
-The tool checks the satellite number, pairing, 69-column line lengths, modulo-10 checksums, epoch, and basic low-Earth-orbit fields. Its default maximum absolute epoch age is 168 hours, matching the app's seven-day rejection window. Use `--max-age-hours 24` to require stricter freshness when downloading:
+The app evaluates `SAT.TLE` and `SAT.BAK` as complete bundles. It chooses the usable bundle with the most configured satellites, breaking ties by total epoch distance from UTC. It never merges per-satellite records from both slots and then overwrites their only protected sources. After refresh it writes the alternate slot, closes it, reopens it, validates every saved object and compares its record content. A failed write leaves the selected source untouched. This is recoverable two-slot storage, not a guarantee of atomic FAT writes or power-loss immunity.
+
+If only some downloads succeed, valid cached records for the others remain. Offline records within **7 days** can be used; older or missing objects are excluded from prediction/tuning. If no usable objects remain, no radio-control session starts. The startup usable/configured count exposes missing data. Refresh runs at startup, not continuously while tracking; restart to request another update.
+
+## Manual update from a computer
+
+From the repository, run:
 
 ```sh
-python3 tools/update_tle.py --max-age-hours 24
+python3 tools/update_tle.py
 ```
 
-An update can fail with that setting even if the source is reachable, because its published element epoch is older than 24 hours. Do not edit the epoch to bypass this check.
+The tool reads the supplied `SAT.CFG`, fetches all enabled objects and writes `sd-card/IC-705/Apps/SAT.TLE`. To use another configuration or destination:
 
-## Manual creation
+```sh
+python3 tools/update_tle.py --config /path/to/SAT.CFG --output /path/to/SAT.TLE --max-age-hours 24
+```
 
-1. Open a source above and find ISS, satellite number **25544**.
-2. Save a plain ASCII text file named `SAT.TLE`, containing an optional satellite name followed by the complete two element lines:
+For offline validation/extraction from an existing combined cache:
 
-   ```text
-   ISS (ZARYA)
-   <the complete 69-character line beginning with "1 25544">
-   <the complete 69-character line beginning with "2 25544">
-   ```
+```sh
+python3 tools/update_tle.py --input /path/to/combined-cache.TLE --output /path/to/SAT.TLE
+```
 
-   The angle-bracket lines above are placeholders, **not usable orbital data**.
-3. Keep all spaces, decimal points, signs and checksum digits. Avoid a word processor or formatting that wraps lines.
-4. Validate/extract it with `python3 tools/update_tle.py --input your-file.txt --output SAT.TLE`.
-5. Copy it to `IC-705/Apps/SAT.TLE`, safely eject the card and restart the stopped application.
+The input must contain every enabled object; a plain AMSAT TLE list may omit six-digit objects. The computer tool replaces its destination only after all profiles validate, using a temporary file and atomic rename. A failed download or validation leaves an existing output intact. Its default age limit is 168 hours; `--max-age-hours 24` requires fresh data. Published epochs can lag even when a source is reachable.
 
-Both LF and CRLF input are accepted. The name line is descriptive; the actual identity is checked in both element lines. Do not copy JSON/OMM data into this text file; this release expects the traditional TLE format.
-
-The file in `tests/fixtures/` is historical test data. It is deliberately **not** an installation file or a claim to current ISS elements. The repository does not ship a predated operational `SAT.TLE`.
-
-## How often to update
-
-As a project operating policy, refresh **before each operating session**, aiming for an epoch less than 24 hours old. Refresh again after known ISS manoeuvres or unexplained timing/direction errors. Stationary radio GPS does not compensate for stale satellite elements.
-
-Freshness is measured from the **element epoch**, not the file modification time or download time. Line1 contains a two-digit epoch year and a fractional day of that year. For example, `26323.84989826` means year 2026, day 323 plus a fraction of a day; it is not a calendar date written as YYYYMMDD.
-
-The seven-day application cutoff is a protective limit. It does not establish that every younger TLE will predict an ISS pass accurately enough for a particular station or antenna.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| `SAT.TLE invalid / missing` | Exact path/name, plain text, both 25544 lines, length, checksums and supported orbital fields. |
-| `SAT.TLE expired (>7 days)` | The element epoch **and** radio date/time in UTC. |
-| File downloads but is rejected | A source may have returned HTML/JSON, an incomplete pair, or elements outside the allowed age window. |
-| Predicted pass differs from expectation | Check fresh elements, UTC/date, live GPS, and the antenna horizon. Predictions use a geometric horizon and sampled search. |
-| Updated file is not used | Stop the app fully, replace the card file, then launch it again. There is no live reload in this release. |
-
-Format reference: [CelesTrak NORAD Two-Line Element Set Format](https://celestrak.org/NORAD/documentation/tle-fmt.php). Repeater availability is separate from orbital data; check [ARISS](https://www.ariss.org/current-status-of-iss-stations.html).
-
-## Automatic startup update (0.18.0)
-
-The tracker checks SD element epochs before GPS acquisition. Data within 24 hours is reused; otherwise, it attempts CelesTrak HTTPS and then AMSAT. Downloaded elements must validate and be within 24 hours of radio UTC. A download failure can fall back to a usable cache within seven days. No usable TLE means no tuning.
-
-`SAT.TLE` and `SAT.BAK` are alternating cache slots. The tracker never truncates its currently selected valid slot; it writes the other, closes it and verifies it by reading it back. At next startup both slots are checked. `SATELITE.TLE` is accepted read-only during migration. The PC updater can continue writing SAT.TLE normally. Do not remove the card or power during a write; native file close/readback is not a filesystem-wide atomicity guarantee.
-
-The standalone probes do not save downloads. The 0.18.0 tracker does. Successful HTTPS probing on hardware is confirmed; the combined startup/SD-write flow still requires its own hardware test.
+Refresh before a planned operating session, preferably daily. Never edit dates, catalog numbers or checksums to make old data appear fresh. Historical test fixtures are not operational downloads.
