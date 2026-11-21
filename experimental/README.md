@@ -22,14 +22,18 @@ The popup is a **snapshot with a text direction marker, not a live graphical com
 
 Build: `python3 tools/build.py --display-probe`.
 
-## 4. FRQTEXT.app — text below the main frequency (v8 only)
+## 4. FRQTEXT.app — text below the main frequency (test 3)
 
 Reads GPS/TLE and attempts to paint `ISS AZ… EL… IN RANGE/BELOW` at native coordinates x=12, y=96. Start in FM, use EXIT until the ordinary frequency screen is visible and look below the frequency. Drawing is suppressed in menus/Apps, other modes and TX. Use Apps STOP when finished; the app requests a native redraw on exit.
 
 This uses original native drawing routines directly, not invented APRS receive packets. It does not patch firmware code or install rendering hooks. **This app-task drawing path is experimental:** the native renderer may overwrite it or produce flicker. A proper UI-thread bridge is still required for production integration. Native GPU scheduling, LCD placement and complete redraw after STOP need device verification.
 
-Build: `python3 tools/build.py --frq-probe`. The IC-705 E v8 callback and drawing signatures must match; the test refuses other firmware bindings.
+Build: `python3 tools/build.py --frq-probe`. The IC-705 E v8/v14 UI callback and drawing signatures must match; other bindings are refused. These UI-only bindings do not make the main tracker v14-compatible.
 
 ## Card contents
 
 The Apps scanner has an eight-file limit and macOS `._*.app` metadata can consume entries. For this test round, keep only the four named test apps in Apps. Preserve other apps in a backup directory outside Apps, retain CFG/TLE and matching firmware support BIN files, and move macOS app sidecars outside Apps before ejecting the card.
+
+Test 3 uses normal-radio surface 12 instead of the Apps surface. It adds rows `FG/M/TX/R`, `DRAW/MAIN/ELSE`, observed UI codes and last draw state. Inspect these by returning to the Apps window after using EXIT to check the main frequency screen. A computed position alone does not prove a visible GPU render. The first test was reported to calculate position but show no main-screen text.
+
+The integrated `sd-card/IC-705/Apps/ISS.app` is now version 0.18.0 and **does configure/tune the radio** after valid TLE, GPS and pass search. It is distinct from these read-only/control-free probes. Its network and SD-write startup integration still needs device verification.

@@ -1,6 +1,7 @@
 #include "icap.h"
 #include "orbit.h"
 #include "gps.h"
+#include "tle_store.h"
 #include "civ_queue.h"
 #include "tuner.h"
 #ifdef ISS_RX_CONTROL
@@ -16,7 +17,7 @@
 #include <math.h>
 #define APP_DISPLAY "ISS tracker"
 #define APP_TLE "ISS.TLE"
-static Api *api;static Orbit orbit;static Tuner tuner;static char linebuf[8][32],filebuf[512];
+static Api *api;static Orbit orbit;static Tuner tuner;static char linebuf[8][32];
 static const char *bridge="CIV PROBE NOT RUN";
 static const char *control(Api *a,uint32_t down,uint32_t up,int gps,int valid){
 #ifdef ISS_SAT_CONTROL
@@ -39,18 +40,7 @@ static const char *control(Api *a,uint32_t down,uint32_t up,int gps,int valid){
 }
 static double lat,lon,alt;static uint32_t nextscan,aos,los,scanned,scanend;static int inpass;
 static void show(unsigned n,const char*s){api->line(n,s);}
-static int readfile(const char *name,char *buf,int cap) {
- int h=api->open(name,0);if(h<0)return h;int n=api->read(h,buf,cap-1);api->close(h);
- if(n<0)return n;buf[n]=0;return n;
-}
 static void status(const char *text){api->clear();show(0,APP_DISPLAY " / IC-705");show(2,text);show(7,bridge);}
-static int elements(void){
- if(readfile(APP_TLE,filebuf,sizeof(filebuf))<0)return -1;
- char *a=filebuf;while(*a&&!(a[0]=='1'&&a[1]==' ')){a=strchr(a,'\n');if(!a)return -1;a++;}
- char *b=strchr(a,'\n');if(!b)return -1;*b++=0;int n=strlen(a);if(n&&a[n-1]=='\r')a[n-1]=0;
- char *end=strchr(b,'\n');if(end)*end=0;n=strlen(b);if(n&&b[n-1]=='\r')b[n-1]=0;
- return orbit_init(&orbit,a,b);
-}
 static void wait_error(const char *s){show(0,APP_DISPLAY " / IC-705");show(2,s);show(4,"No radio settings changed");while(!api->stop())api->sleep(250);}
 static void pass_reset(uint32_t now){aos=los=0;nextscan=now;scanned=0;scanend=now+86400;inpass=0;}
 static void pass_work(void){
@@ -70,6 +60,9 @@ int app_main(Api *a){
  if(!a->radio_state||!a->ticks||!a->stop||!a->sleep||!a->line||!a->clear)return -1;
 #endif
  a->clear();
+#ifndef ISS_HOST_TEST
+ if((uintptr_t)a->radio_state!=0x2037bac9||(uintptr_t)a->clock!=0x2037bf27){wait_error("Tracker requires pinned v8");return -1;}
+#endif
 #ifdef ISS_SAT_CONTROL
  bridge="SAT HOLD: STARTING";
 #elif defined(ISS_RX_CONTROL)
@@ -81,9 +74,10 @@ int app_main(Api *a){
  if(probe==0){for(unsigned i=0;i<10&&civ_read_probe_pending();i++)a->sleep(100);bridge=civ_read_probe_pending()?"CIV QUEUE: TIMEOUT":"CIV QUEUE: CONSUMED";}
  else bridge=probe==-2?"CIV QUEUE: UNSUPPORTED":"CIV QUEUE: BUSY";
 #endif
- status("Checking ISS.TLE...");
- if(elements()){show(5,"Update ISS.TLE on SD card");wait_error(APP_TLE " invalid / missing");return -4;}
- uint32_t prev=0;double oldlat=1000,oldlon=1000;int startup_ready=0,age_shown=0;
+ int tle=tle_startup(a,&orbit);
+ if(tle==-2)return 0;
+ if(tle){wait_error("No usable ISS TLE / update SD");return -4;}
+ uint32_t prev=0;double oldlat=1000,oldlon=1000;int startup_ready=0;
  while(!a->stop()){
   RadioClock c;if(a->clock(&c)<0||c.year<2025||c.year>2099||c.month<1||c.month>12||c.day<1||c.day>31){bridge=startup_ready?control(a,0,0,0,0):"STARTUP / NO RADIO CHANGES";status("Set radio clock to UTC");a->sleep(250);continue;}
   uint32_t now=utc_seconds(c.year,c.month,c.day,c.hour,c.minute,c.second);
@@ -92,16 +86,8 @@ int app_main(Api *a){
   lat=pos.lat;lon=pos.lon;alt=0;
   if(!prev||now<prev||now-prev>5||fabs(oldlat-lat)>0.02||fabs(oldlon-lon)>0.02||(los&&now>los))pass_reset(now);
   oldlat=lat;oldlon=lon;prev=now;
-  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status(APP_TLE " expired (>7 days)");show(4,"Automatic download not enabled");show(5,"Update ISS.TLE on SD card");a->sleep(1000);continue;}
+  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status(APP_TLE " expired (>7 days)");show(4,"Restart to check for new TLE");show(5,"Update ISS.TLE on SD card");a->sleep(1000);continue;}
   if(!startup_ready){
-   if(!age_shown){
-    double age=((double)now-orbit.epoch)/3600;
-    status(age>24||age<-24?"TLE older than 24 hours":"TLE age check OK");
-    snprintf(linebuf[3],32,"Epoch offset: %+.1f hours",age);show(3,linebuf[3]);
-    show(4,"Automatic download not enabled");
-    show(5,"Using validated SD card TLE");
-    a->sleep(2500);age_shown=1;continue;
-   }
    pass_work();
    status("Calculating next AOS / LOS");
    snprintf(linebuf[3],32,"Search: %lu%%",(unsigned long)(scanned*100/2881));show(3,linebuf[3]);

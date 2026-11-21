@@ -58,3 +58,11 @@ The seven-day application cutoff is a protective limit. It does not establish th
 | Updated file is not used | Stop the app fully, replace the card file, then launch it again. There is no live reload in this release. |
 
 Format reference: [CelesTrak NORAD Two-Line Element Set Format](https://celestrak.org/NORAD/documentation/tle-fmt.php). Repeater availability is separate from orbital data; check [ARISS](https://www.ariss.org/current-status-of-iss-stations.html).
+
+## Automatic startup update (0.18.0)
+
+The tracker checks SD element epochs before GPS acquisition. Data within 24 hours is reused; otherwise, it attempts CelesTrak HTTPS and then AMSAT. Downloaded elements must validate and be within 24 hours of radio UTC. A download failure can fall back to a usable cache within seven days. No usable TLE means no tuning.
+
+`ISS.TLE` and `ISS.BAK` are alternating cache slots. The tracker never truncates its currently selected valid slot; it writes the other, closes it and verifies it by reading it back. At next startup both slots are checked. `SATELITE.TLE` is accepted read-only during migration. The PC updater can continue writing ISS.TLE normally. Do not remove the card or power during a write; native file close/readback is not a filesystem-wide atomicity guarantee.
+
+The standalone probes do not save downloads. The 0.18.0 tracker does. Successful HTTPS probing on hardware is confirmed; the combined startup/SD-write flow still requires its own hardware test.

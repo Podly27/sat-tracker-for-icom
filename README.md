@@ -5,11 +5,11 @@
 | Capability | Status |
 |---|---|
 | Standalone ISS GPS/Doppler tracking and STOP restoration | Existing v8 target; see hardware/software validation notes below |
-| Startup TLE-age check and AOS/LOS search | Implemented locally in 0.16.0; device verification pending |
-| Internet TLE retrieval | Extended v8/v14 socket API identified; separate `TLEDNS.app` / `TLEIP.app` compare hostname and numeric TCP/TLS; first probe reported connection failure |
+| Startup TLE-age check and AOS/LOS search | Integrated in 0.18.0 with HTTPS refresh; device verification pending |
+| Internet TLE retrieval | Both DNS and numeric-IP probes downloaded fresh ISS TLE on the radio; 0.18.0 integrates startup refresh and recoverable SD storage |
 | Tracker radio control on v14 | Not yet supported/validated; v14 probe compatibility does not imply tracker compatibility |
 | Native ISS detail popup | Native text dialog appeared on the radio; `DISPCHK.app` now reserves space for CLOSE; snapshot only |
-| Text below the main frequency | Experimental v8-only `FRQTEXT.app` uses native draw routines; host/ARM checks passed, radio test pending |
+| Text below the main frequency | First app-surface attempt showed no text; test 3 selects native surface 12 and reports visibility/mode/draw counters; device check pending |
 | Live graphical compass / production display integration | Dedicated UI-thread bridge still required; not implemented |
 
 **Correction:** an earlier development note said v8 exposed no network API. It does: our original header omitted the extended entries. See [network research, test procedure and native display findings](docs/NETWORK-AND-DISPLAY.md).
@@ -23,7 +23,7 @@ This repository contains the application and its source. It does **not** contain
 
 ## What it does
 
-- Tracks **ISS only**, using SGP4 and an `ISS.TLE` file.
+- Tracks **ISS only**, using SGP4, validated SD elements and startup HTTPS refresh.
 - Reads a live fix from the IC-705's **internal GPS**; no manually entered location is used.
 - Displays UTC, azimuth, elevation, slant range, the corrected RX/TX frequencies, and the next acquisition or loss of signal (AOS/LOS).
 - Configures **VFO A for downlink reception**, **VFO B for uplink transmission**, FM on both VFOs, **67.0 Hz CTCSS** on the uplink, and **SPLIT**.
@@ -142,7 +142,7 @@ The snapshot is kept in RAM for the current session. It is not a power-loss back
 - Version **0.15.0** renames that standalone application and its files to ISS. The four radio-control object files were byte-identical to the predecessor when checked locally; the renamed build still needs its own device confirmation.
 - Software readback is not an independent measurement of the transmitted RF frequency.
 - Manual tuning/mode changes can stop automatic control. Use STOP and start a fresh session to resume.
-- There is no satellite selection, multi-satellite pass list, Doppler toggle, native SAT/DECODE panel, automatic PTT, or in-radio Internet TLE update in this release.
+- There is no satellite selection, multi-satellite pass list, Doppler toggle, native SAT/DECODE panel, or automatic PTT. Native display probes are separate from the tracker.
 - AOS/LOS searching uses a 30-second sampling step and is an estimate, not a second-accurate prediction.
 
 See [validation scope](docs/VALIDATION.md) and [changelog](CHANGELOG.md).
@@ -166,8 +166,12 @@ The output is `build/ISS.app`. Building does not require, fetch, or modify an Ic
 
 Icom firmware and manuals are not licensed or distributed by this repository. Icom and IC-705 are names/trademarks of their respective owner.
 
-## Startup sequence (0.16.0)
+## Startup sequence (0.18.0)
 
-The startup screen validates ISS.TLE against its orbital epoch and the radio UTC clock, waits for internal GPS, then calculates the next AOS/LOS before entering the receive screen. TLE older than 24 hours is flagged; validated data within the existing seven-day limit can still be used offline. Missing, invalid or expired elements prevent tuning. STOP can cancel startup without changing radio settings.
+Startup checks radio UTC and the epochs in `ISS.TLE`, `ISS.BAK` and the legacy `SATELITE.TLE`. It selects the usable candidate closest to radio UTC. If none is usable, or the selected elements are more than 24 hours from UTC, it tries a hostname-based HTTPS update. Valid elements already within 24 hours skip the network request.
 
-**Automatic in-radio updates are not enabled in the tracker yet.** Analysis of the extended ICAP tables found socket callbacks in both v8 and v14; our earlier claim that v8 had no network API was incorrect. The experimental `TLEDNS.app` and `TLEIP.app` compare hostname and numeric TCP/TLS without tuning or SD writes. See [network and native display research](docs/NETWORK-AND-DISPLAY.md). Until device verification is complete, update the card with `tools/update_tle.py` on a computer.
+Downloaded elements must pass checksums, NORAD identity, orbit initialization and a 24-hour epoch limit. The app saves them into the alternate `ISS.TLE` / `ISS.BAK` slot and verifies the bytes by reopening it. The selected valid file is never opened for writing. There is no rename/fsync API, so this is a recoverable two-slot cache, not a claim of atomic FAT updates or immunity to card/power failure. If saving fails, verified downloaded data can still be used in RAM for that session.
+
+When networking fails, a validated cached orbit within seven days can be used offline. If no usable orbit exists, no radio control starts. UTC changes or an expired cache pause control; restart to perform a new startup download attempt. Online checks run at startup only.
+
+After loading TLE, the app waits for internal GPS and computes the next AOS/LOS before starting its existing radio-control session. STOP during startup cancels before radio settings are captured or changed. The integrated update/save path has host and simulated ARM validation; it still needs a device run. The separate DNS and numeric-IP HTTPS probes have both downloaded and validated a fresh ISS TLE on the owner's IC-705.

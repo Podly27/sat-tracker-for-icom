@@ -12,7 +12,7 @@ static int open_(const char*n,unsigned flags){assert(!flags);assert(!strcmp(n,"I
 static int read_(int fd,void*b,int count){(void)fd;(void)count;strcpy(b,"1 mock\n2 mock\n");return 14;}
 static int close_(int fd){(void)fd;return 0;}
 int probe_ui_supported(Api*a){(void)a;return supported;}
-int probe_main_visible(void){return visible;}
+unsigned probe_ui_code(void){return visible?0:0x33;}
 void probe_paint(unsigned y,const char*s){assert(visible&&!tx&&mode==0xa0&&fix&&!expired);assert(y==96);assert(!strcmp(s,"ISS AZ105 EL+13 IN RANGE"));painted++;}
 void probe_redraw(void){redrawn++;}
 uint32_t utc_seconds(int y,int m,int d,int h,int min,int s){(void)y;(void)m;(void)d;(void)h;(void)min;(void)s;return 1000000;}

@@ -18,6 +18,7 @@ static int state(void*p){(void)p;return 0;}
 uint32_t utc_seconds(int y,int m,int d,int h,int min,int s){(void)y;(void)m;(void)d;(void)h;(void)min;(void)s;return 1000000;}
 int orbit_init(Orbit*o,const char*a,const char*b){(void)a;(void)b;o->epoch=1000000-epoch_offset;return 0;}
 int orbit_look(Orbit*o,uint32_t t,double la,double lo,double al,Look*q){(void)o;(void)la;(void)lo;(void)al;searches++;*q=(Look){0,t>=1000030&&t<1000090?10:-10,1000,0,437800000,145990000};return 0;}
+int tle_startup(Api*a,Orbit*o){(void)a;if(missing)return -1;o->epoch=1000000-epoch_offset;return 0;}
 int gps_read(GpsPosition*p){*p=(GpsPosition){0,0,fix};return fix?GPS_OK:GPS_NO_FIX;}
 int radio_session_capture(Api*a){(void)a;assert(los==1000090);return 1;}
 const char *radio_session_status(void){return "TEST SESSION";}

@@ -43,8 +43,12 @@ The app re-reads settings to verify restoration. It waits for RX rather than res
 
 The snapshot is volatile RAM. Removing power, a crash or interrupted shutdown can prevent restoration; the app does not provide a full radio backup or persistent recovery mechanism.
 
-## Startup sequence (0.16.0)
+## Startup sequence (0.18.0)
 
-The startup screen validates ISS.TLE against its orbital epoch and the radio UTC clock, waits for internal GPS, then calculates the next AOS/LOS before entering the receive screen. TLE older than 24 hours is flagged; validated data within the existing seven-day limit can still be used offline. Missing, invalid or expired elements prevent tuning. STOP can cancel startup without changing radio settings.
+Startup checks radio UTC and the epochs in `ISS.TLE`, `ISS.BAK` and the legacy `SATELITE.TLE`. It selects the usable candidate closest to radio UTC. If none is usable, or the selected elements are more than 24 hours from UTC, it tries a hostname-based HTTPS update. Valid elements already within 24 hours skip the network request.
 
-**Automatic in-radio updates are not enabled in the tracker yet.** Analysis of the extended ICAP tables found socket callbacks in both v8 and v14; our earlier claim that v8 had no network API was incorrect. The experimental `TLEDNS.app` and `TLEIP.app` compare hostname and numeric TCP/TLS without tuning or SD writes. See [network and native display research](NETWORK-AND-DISPLAY.md). Until device verification is complete, update the card with `tools/update_tle.py` on a computer.
+Downloaded elements must pass checksums, NORAD identity, orbit initialization and a 24-hour epoch limit. The app saves them into the alternate `ISS.TLE` / `ISS.BAK` slot and verifies the bytes by reopening it. The selected valid file is never opened for writing. There is no rename/fsync API, so this is a recoverable two-slot cache, not a claim of atomic FAT updates or immunity to card/power failure. If saving fails, verified downloaded data can still be used in RAM for that session.
+
+When networking fails, a validated cached orbit within seven days can be used offline. If no usable orbit exists, no radio control starts. UTC changes or an expired cache pause control; restart to perform a new startup download attempt. Online checks run at startup only.
+
+After loading TLE, the app waits for internal GPS and computes the next AOS/LOS before starting its existing radio-control session. STOP during startup cancels before radio settings are captured or changed. The integrated update/save path has host and simulated ARM validation; it still needs a device run. The separate DNS and numeric-IP HTTPS probes have both downloaded and validated a fresh ISS TLE on the owner's IC-705.

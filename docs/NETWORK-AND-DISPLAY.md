@@ -33,7 +33,7 @@ Run `python3 tools/audit_network_table.py /path/to/privately-decoded-main.bin` t
 
 Pointers are Thumb-tagged. `tle_network_supported()` checks the five readiness/transport pointers and the native-error callback plus radio/build/ABI/size before any network call. These are inferred internal interfaces, not an upstream public SDK contract.
 
-In the v14 connect wrapper, flag bit 2 selects UDP (`type=2`, `protocol=17`). With bit 2 clear, flag bit 0 selects `type=1`, `protocol=100`, versus ordinary TCP protocol 6. The secure branch also configures socket option 0x2d with the hostname. We infer a TLS path from this, but **certificate validation, SNI semantics and TLS interoperability have not been verified on the radio**. The probe uses port 443 and flags 1; there is no plaintext HTTP fallback.
+In the v14 connect wrapper, flag bit 2 selects UDP (`type=2`, `protocol=17`). With bit 2 clear, flag bit 0 selects `type=1`, `protocol=100`, versus ordinary TCP protocol 6. The secure branch also configures socket option 0x2d with the hostname. We infer a TLS path from this, but **certificate validation and SNI semantics have not been independently verified; successful port-443 TLE retrieval is now reported on the radio**. The probe uses port 443 and flags 1; there is no plaintext HTTP fallback.
 
 ## Isolated HTTPS test
 
@@ -86,3 +86,11 @@ After a real-radio HTTPS result, integrate downloads into tracker startup with o
 The operator reports `NET CONNECT FAILED` from the first HTTPS probe and confirms that the native ISS popup appeared; native CLOSE obscured its lower rows. The revised dialog uses only four information rows. DNS/IP checks and error capture are described in [the four-app procedure](../experimental/README.md).
 
 A separate experimental v8-only FRQTEXT app now tests native drawing at x=12/y=96 without a firmware hook or RX-message injection. It uses the native text wrapper at 0x2037b88d and rectangle routine at 0x2014775c, gated by normal-screen visibility, FM and RX. It requests native UI redraw through the two existing UI dirty flags on STOP. This is an app-thread drawing experiment; it does not remove the need for a production UI-thread bridge and does not claim a stable overlay or graphic compass.
+
+## Third round: confirmed downloads and integrated startup
+
+The operator reported both hostname and numeric-IP checks succeeding on the IC-705: TCP C=0/E=0, CelesTrak TLS C=0/E=0, valid ISS elements with a +9-hour epoch offset. The reported connect times were 2,898 ms (hostname) and 7,157 ms (numeric IP). AMSAT was not attempted because CelesTrak succeeded. DNS failure is therefore not demonstrated by those tests. The shortened information dialog was also confirmed to fit above CLOSE.
+
+Version 0.18.0 integrates hostname HTTPS retrieval into tracker startup when the cache is missing or older than 24 hours. See the operating/TLE notes for the two-slot ISS.TLE / ISS.BAK storage and offline behavior. The integrated SD write is not yet device-confirmed.
+
+The first FRQTEXT computed a position in its own Apps window but showed no main-screen text. Its layer-18 draw target is the Apps surface. Native normal-radio text call sites use surface 12 (480x123); test 3 reproduces the native text argument layout on that surface at x=12/y=96. It remains an experimental direct app-task draw and may be overwritten by normal rendering. It now records UI state, mode, TX, MAIN/ELSE counts and DRAW attempts, plus the last draw state. Reopen its Apps window after checking the normal frequency screen to inspect those counters. Both v8/v14 UI bindings are pinned, without changing the tracker's v8-only control target.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.18.0 — 2026-11-21
+
+- Integrate startup HTTPS refresh for missing or >24-hour TLE, then GPS and pass search before radio control.
+- Validate downloaded orbit/epoch; keep offline fallback within seven days.
+- Alternate ISS.TLE / ISS.BAK and verify writes without truncating the selected valid source; accept legacy SATELITE.TLE read-only.
+- Record successful real-radio DNS/IP downloads and the corrected native popup.
+- FRQ test 3 selects native main-text surface 12 and exposes visibility/mode/TX/draw diagnostics; LCD confirmation pending.
+- Host and simulated ARM checks passed; integrated SD refresh remains unverified on hardware.
+
 ## Diagnostic round 2 — 2026-11-21
 
 - Split network tests into TLEDNS/TLEIP with TCP443 control, captured TLS wrapper/native errors and elapsed times; keep HTTP Host names when connecting by numeric IP.

@@ -46,3 +46,13 @@ The native-dialog probe adds a 28th host test method with five scenarios (valid 
 Twenty-nine host test methods pass. The FRQ test covers missing/stale elements, GPS loss, unsupported bindings, menus, non-FM and active TX. The native popup was reported to appear on hardware; the first HTTPS probe was reported to fail connection, so successful radio TLE retrieval is not claimed.
 
 The compiled FRQTEXT ARM image was also run locally with the owner's private v8 firmware under Unicorn outside the sandbox (JIT allocation is blocked inside it). The real Icom GPS helpers and text-wrapper instructions ran. GPU primitives and ICAP callbacks were mocked. Main/RX produced the expected text arguments at x=12/y=96, no CI-V frames, and only the two native UI dirty-flag writes on STOP; menu/TX cases produced no drawing or native writes. Observed stack use was 1,424 bytes. This does not test real GPU scheduling, LCD output or native repaint completion.
+
+## 0.18.0 integrated refresh and FRQ test 3
+
+Both DNS and numeric-IP HTTPS probes are reported to have returned valid fresh ISS elements on the owner's radio. The fixed native text popup is also reported to display correctly. FRQ test 2 calculated a position but displayed nothing under the main frequency. These are user observations, not agent-operated hardware tests.
+
+Thirty public host test methods pass. New store tests cover fresh/stale/missing/corrupt cache, selecting the fresher slot, offline/expired data, failed or invalid/stale downloads, partial writes, write/readback failure and STOP during download/save. The protected valid source remains byte-identical.
+
+The compiled 0.18 ARM startup ran with native v8 GPS helpers and simulated TLS/SD/ICAP callbacks. A fresh-cache run made no connection; a stale-cache run fetched, validated and wrote the alternate slot, closed the network handle and preserved the original file. STOP before pass-search completion returned without CI-V or radio-state writes. Observed stack usage was 5,240 bytes within the 8,192-byte allocation. No real SD controller/TLS peer verification was exercised. The integrated on-radio refresh and file write remain pending.
+
+FRQ test 3's compiled ARM code passed main/menu/TX checks with native drawing entry points intercepted: it targets layer 12 and passes x=12/y=96; no CI-V occurs. The UI diagnostic counters are new. Actual rendering/scheduling on the LCD remains pending.
