@@ -1,4 +1,4 @@
-"""UTC rollover and remaining-minute semantics, using the actual tiny formatter."""
+"""UTC rollover and remaining-time semantics, using the actual tiny formatter."""
 from pathlib import Path
 import ctypes as C,datetime,shutil,subprocess,sys,tempfile,unittest
 ROOT=Path(__file__).resolve().parents[1]
@@ -19,8 +19,8 @@ class PassStatusTests(unittest.TestCase):
  def test_next_year_and_leap_day(self):
   for now,aos,want in [('2026-12-31T23:59','2027-01-01T00:05','Waiting for ISS 01.01. 00:05'),('2028-02-28T23:59','2028-02-29T02:03','Waiting for ISS 29.02. 02:03'),('2029-02-28T23:59','2029-03-01T02:03','Waiting for ISS 01.03. 02:03')]:
    self.assertEqual(self.status(self.utc(now),self.utc(aos)),want)
- def test_minutes_round_up(self):
-  for remaining,want in [(1,1),(59,1),(60,1),(61,2),(420,7)]:self.assertEqual(self.status(1000,los=1000+remaining,visible=1),f'ISS pass: {want} min left')
+ def test_minutes_and_seconds(self):
+  for remaining,want in [(1,'0:01'),(59,'0:59'),(60,'1:00'),(61,'1:01'),(135,'2:15'),(420,'7:00')]:self.assertEqual(self.status(1000,los=1000+remaining,visible=1),f'ISS pass: {want} left')
  def test_end_search_and_absence(self):
   self.assertEqual(self.status(1000,los=1000,visible=1),'ISS pass ending')
   self.assertEqual(self.status(1000,visible=1),'ISS pass / finding end')
@@ -28,7 +28,7 @@ class PassStatusTests(unittest.TestCase):
   self.assertEqual(self.status(1000,complete=1),'No ISS pass in next 24 hours')
  def test_past_aos_and_name_parameter(self):
   self.assertEqual(self.status(1000,aos=900),'Finding next ISS pass')
-  self.assertEqual(self.status(1000,los=1060,visible=1,name=b'SO-50'),'SO-50 pass: 1 min left')
+  self.assertEqual(self.status(1000,los=1060,visible=1,name=b'SO-50'),'SO-50 pass: 1:00 left')
 
  def test_fixed_native_pages(self):
   fn=self.lib.pass_status_pages;fn.argtypes=[C.c_void_p,C.c_char_p,C.c_uint32,C.c_uint32,C.c_uint32,C.c_int,C.c_int];fn.restype=C.c_uint
@@ -36,9 +36,11 @@ class PassStatusTests(unittest.TestCase):
    out=C.create_string_buffer(28);count=fn(out,name,now,aos,los,visible,complete);result=[out.raw[i*14:(i+1)*14].split(b'\0')[0].decode()for i in range(count)];self.assertTrue(all(len(s)<=13 for s in result));return result
   now=self.utc('2026-11-21T12:00');aos=self.utc('2026-11-21T15:20')
   self.assertEqual(pages(b'SO-131',now,aos),['WAIT SO-131'])
-  self.assertEqual(pages(b'SO-131',now,los=now+61,visible=1),['SO-131 2m'])
-  self.assertEqual(pages(b'AO-123',now,visible=1),['AO-123 --m'])
-  self.assertEqual(pages(b'ISS',now,los=now,visible=1),['ISS 0m'])
-  for remaining,want in [(1,1),(59,1),(60,1),(61,2),(420,7)]:self.assertEqual(pages(b'ISS',now,los=now+remaining,visible=1),[f'ISS {want}m'])
+  self.assertEqual(pages(b'SO-131',now,los=now+61,visible=1),['SO-131 1:01'])
+  self.assertEqual(pages(b'AO-123',now,visible=1),['AO-123 --:--'])
+  self.assertEqual(pages(b'ISS',now,los=now,visible=1),['ISS 0:00'])
+  for remaining,want in [(1,'0:01'),(59,'0:59'),(60,'1:00'),(61,'1:01'),(135,'2:15'),(420,'7:00')]:self.assertEqual(pages(b'ISS',now,los=now+remaining,visible=1),[f'ISS {want}'])
+  self.assertEqual(pages(b'SO-131',now,los=now-1,visible=1),['SO-131 0:00'])
+  self.assertEqual(pages(b'SO-131',now,los=now+100000,visible=1),['SO-131 999:59'])
   self.assertEqual(pages(b'ISS',now),['NO PASS 24H'])
   self.assertEqual(pages(b'ISS',now,complete=0),['FIND PASSES'])

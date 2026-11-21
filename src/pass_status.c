@@ -8,11 +8,12 @@ static void date(uint32_t utc,unsigned *day,unsigned *month){
  unsigned m=0;while(m<11){unsigned n=lengths[m]+(m==1&&leap(y));if(days<n)break;days-=n;m++;}
  *day=days+1;*month=m+1;
 }
+static unsigned remaining(uint32_t now,uint32_t los){uint32_t n=los>now?los-now:0;return n>59999?59999:n;}
 void pass_status_format(char*out,size_t size,const char*name,uint32_t now,uint32_t aos,uint32_t los,int in_range,int complete){
  if(in_range){
   if(!los)snprintf(out,size,"%s pass / finding end",name);
   else if(los<=now)snprintf(out,size,"%s pass ending",name);
-  else snprintf(out,size,"%s pass: %lu min left",name,(unsigned long)((los-now)/60+((los-now)%60!=0)));
+  else{unsigned n=remaining(now,los);snprintf(out,size,"%s pass: %u:%02u left",name,n/60,n%60);}
  }else if(aos>now){
   unsigned day,month;date(aos,&day,&month);
   snprintf(out,size,"Waiting for %s %02u.%02u. %02u:%02u",name,day,month,(unsigned)((aos/3600)%24),(unsigned)((aos/60)%60));
@@ -23,8 +24,8 @@ void pass_status_format(char*out,size_t size,const char*name,uint32_t now,uint32
 unsigned pass_status_pages(char pages[2][14],const char*name,uint32_t now,uint32_t aos,uint32_t los,int in_range,int complete){
  pages[0][0]=pages[1][0]=0;
  if(in_range){
-  if(!los)snprintf(pages[0],14,"%s --m",name);
-  else{unsigned minutes=los>now?(los-now)/60+((los-now)%60!=0):0;snprintf(pages[0],14,"%s %um",name,minutes);}
+  if(!los)snprintf(pages[0],14,"%s --:--",name);
+  else{unsigned n=remaining(now,los);snprintf(pages[0],14,"%s %u:%02u",name,n/60,n%60);}
  }
  else if(aos>now)snprintf(pages[0],14,"WAIT %s",name);
  else snprintf(pages[0],14,complete?"NO PASS 24H":"FIND PASSES");

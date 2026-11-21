@@ -113,7 +113,7 @@ static int save(Api*a,unsigned slot,uint32_t utc,Orbit*scratch){
  Cache check={.a=a,.orbit=scratch,.now=utc,.verify=1};if(rows(a,dest,cache_row,&check)||check.count!=expected)return -1;return 0;
 }
 int catalog_startup(Api*a,Orbit*scratch){
- a->clear();a->line(0,"SAT / STARTUP 0.31");
+ a->clear();a->line(0,"SAT / STARTUP 0.32");
  if(catalog_config(a))return -1;
  uint32_t utc;while(!a->stop()&&now(a,&utc)){a->line(2,"Set radio clock to UTC");a->sleep(250);}if(a->stop())return -2;
  const char*files[]={"SAT.TLE","SAT.BAK"};unsigned slot=2,best=0;double score=1e12;

@@ -10,9 +10,9 @@ Requires IC-705 E with SQ6EMM `705E140_20261119v8`. Other firmware versions are 
 
 ## Display
 
-The Apps window shows the satellite name, UTC/GPS status, azimuth from true north, elevation, distance, RX/TX frequencies, pass status and tone. `Waiting for GPS` precedes a valid position. `Waiting for SO-131 DD.MM. HH:MM` gives the next AOS in UTC; `SO-131 pass: N min left` rounds remaining time up. Horizon estimates use 30-second sampling.
+The Apps window shows the satellite name, UTC/GPS status, azimuth from true north, elevation, distance, RX/TX frequencies, pass status and tone. `Waiting for GPS` precedes a valid position. `Waiting for SO-131 DD.MM. HH:MM` gives the next AOS in UTC; `SO-131 pass: M:SS left` shows remaining minutes and seconds. Horizon estimates use 30-second sampling.
 
-The native receiver-status field below the main frequency shows one message of at most 13 characters, refreshed every 500 ms without alternating pages. Examples: `WAIT SO-131`, `SO-131 7m`, or `WAIT FOR GPS`. The visible-pass message gives rounded-up remaining minutes (`--m` until LOS is known, `0m` at the predicted end). Full date/time details stay in the Apps window. The radio adds `RX:` itself. Native status publication pauses during TX/non-FM; it is not a received-signal or successful-contact indicator. The ordinary modulation label remains FM. There is no DECODE-area overlay or graphical compass.
+The native receiver-status field below the main frequency shows one message of at most 13 characters, refreshed every 500 ms without alternating pages. Examples: `WAIT SO-131`, `SO-131 7:15`, or `WAIT FOR GPS`. The visible-pass message gives remaining minutes and seconds (`--:--` until LOS is known, `0:00` at the predicted end). Full date/time details stay in the Apps window. The radio adds `RX:` itself. Native status publication pauses during TX/non-FM; it is not a received-signal or successful-contact indicator. The ordinary modulation label remains FM. There is no DECODE-area overlay or graphical compass.
 
 A visible satellite wins over a future one. Overlaps use the first enabled configuration row. Otherwise the earliest AOS wins. A pending satellite switch waits until RX; the Apps window identifies that destination. Orbital availability, geometric visibility and actual repeater operation are separate things.
 
@@ -38,8 +38,8 @@ Multi-satellite changes in 0.23 have software/ARM validation and still require o
 
 Version 0.25 is a diagnostic candidate for the reported first-start busy condition. If capture fails, it stores read-only transport snapshots in `SATDBG.LOG` and shows the SAVE phase. Return the card after STOP/power-off for inspection. See [CI-V diagnostics](CI-V-DEBUG.md). It does not clear an unknown busy path.
 
-## UI diagnostic build 0.31
+## UI diagnostic builds 0.31–0.32
 
-Automatic scrolling still occurs on the owner's radio with 0.30; disabling it is not yet verified. Build 0.31 temporarily replaces the last two normal Apps rows (tone/priority and blank status) with read-only native UI diagnostics when no radio error is present. Radio errors take precedence. It does not change scrolling behavior relative to 0.30 or write extra SD logs.
+Automatic scrolling still occurs on the owner's radio with 0.30; disabling it is not yet verified. These builds temporarily replaces the last two normal Apps rows (tone/priority and blank status) with read-only native UI diagnostics when no radio error is present. Radio errors take precedence. It does not change scrolling behavior relative to 0.30 or write extra SD logs.
 
 Hide SAT with EXIT, leave the normal FM/RX screen visible for at least ten seconds while the unwanted motion happens, then reopen the running SAT app and photograph both bottom diagnostic rows. They retain the latest sample from the main screen. `N` is native state/style, `H` its hold duration, `E` its elapsed counter and `Q` its pending-event flags. `S` is native scroll-group 4 flags/index, `P` its peak sampled index, `B` group 5 index, `O` the rendered output offset and `L` the native output-length byte. These raw values are observations, not a diagnosis. Normal tracking/STOP remain available.
