@@ -5,6 +5,8 @@
 #ifndef ISS_HOST_TEST
 #define CACHE ((volatile uint8_t*)0x20393020)
 #define RX_ELAPSED (*(volatile uint16_t*)0x20381324)
+#define RX_SCROLL ((volatile uint8_t*)0x203930fa)
+#define RX_SCROLL_ELAPSED (*(volatile uint16_t*)0x20402010)
 static unsigned lock(void){unsigned c;__asm__ volatile("mrs %0, cpsr\n cpsid i":"=r"(c)::"memory");return c;}
 static void unlock(unsigned c){__asm__ volatile("dmb sy\n msr cpsr_c, %0"::"r"(c):"memory");}
 static void dirty(void){((void(*)(unsigned))0x200b8f14)(0);}
@@ -13,13 +15,21 @@ extern volatile uint8_t test_cache[202];
 #define CACHE test_cache
 extern volatile uint16_t test_rx_elapsed;
 #define RX_ELAPSED test_rx_elapsed
+extern volatile uint8_t test_scroll[6];
+extern volatile uint16_t test_scroll_elapsed;
+#define RX_SCROLL test_scroll
+#define RX_SCROLL_ELAPSED test_scroll_elapsed
 static unsigned lock(void){return 0;}
 static void unlock(unsigned c){(void)c;}
 extern void test_dirty(void);
 static void dirty(void){test_dirty();}
 #endif
 static uint8_t saved[13],last[13],saved_tail[20],saved_tail_length,saved_length,saved_visible,saved_update;
-static unsigned active;
+static unsigned active,hold_owned;static uint16_t prior_hold;
+static void release_hold(int owned){
+ if(owned&&hold_owned&&CACHE[2]==7&&(CACHE[6]&2)&&CACHE[4]==255&&CACHE[5]==255){CACHE[4]=prior_hold;CACHE[5]=prior_hold>>8;}
+ hold_owned=0;
+}
 int aprs_status_supported(Api*a){
 #ifndef ISS_HOST_TEST
  static const uint32_t notification[]={0xe59f1820,0xe0811000,0xe5d12002,0xe3822004};
@@ -32,7 +42,9 @@ int aprs_status_supported(Api*a){
   !memcmp((const void*)0x2004a208,cache_update,sizeof(cache_update))&&
   !memcmp((const void*)0x2004b050,hold_setup,sizeof(hold_setup))&&
   !memcmp((const void*)0x2004b5a4,hold_check,sizeof(hold_check))&&
-  *(const uint32_t*)0x2004ae8c==0x20381324;
+  *(const uint32_t*)0x2004ae8c==0x20381324&&
+  *(const uint32_t*)0x2004c178==0x203930ea&&*(const uint32_t*)0x2004c188==0x20402008&&
+  *(const uint32_t*)0x202de70c==4;
 #else
  return a!=0;
 #endif
@@ -43,7 +55,7 @@ int aprs_status_publish(const char*s){
  unsigned c=lock();
  if(active&&CACHE[0x50]){unlock(c);return -2;}
  if(active){for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i]){unlock(c);return -2;}}
- int held=active&&CACHE[2]==7&&(CACHE[6]&2)&&(CACHE[4]||CACHE[5]);
+ int held=active&&CACHE[2]==7&&(CACHE[6]&2);
  if(!active){
   for(unsigned i=0;i<20;i++)saved_tail[i]=CACHE[0x3c + i];saved_tail_length=CACHE[0x50];
   for(unsigned i=0;i<13;i++)saved[i]=CACHE[0x2e + i];saved_length=CACHE[0x3b];saved_visible=CACHE[0]&0x20;saved_update=CACHE[0x51]&8;active=1;
@@ -53,10 +65,12 @@ int aprs_status_publish(const char*s){
   * A stale tail would extend SAT pages and trigger the native scroller. */
  for(unsigned i=0;i<20;i++)CACHE[0x3c + i]=' ';CACHE[0x50]=0;
  CACHE[0x3b]=(uint8_t)n;
- /* In pinned v8 state 7 is the RX name, bit 1 selects its RX variant,
-  * and a nonzero hold precedes scrolling. Renew only that owned hold;
-  * don't enqueue another message lifecycle while the row is held. */
- if(held)RX_ELAPSED=0;else CACHE[0]|=0x20;
+ /* Adopt an RX row even if its original hold already expired. Reset
+  * the owned scroll group once, then keep the extended hold alive. */
+ if(held){
+  if(!hold_owned){prior_hold=CACHE[4]|(CACHE[5]<<8);hold_owned=1;RX_SCROLL[0]&=~2;RX_SCROLL[1]=0;RX_SCROLL_ELAPSED=0;}
+  CACHE[4]=CACHE[5]=255;RX_ELAPSED=0;
+ }else CACHE[0]|=0x20;
  CACHE[0x51]|=8;unlock(c);dirty();return 0;
 }
 int aprs_status_end_trace(void (*trace)(unsigned)){
@@ -64,6 +78,7 @@ int aprs_status_end_trace(void (*trace)(unsigned)){
  if(!active){if(trace)trace(4);return 0;}
  unsigned c=lock();int owned=CACHE[0x50]==0;
  for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
+ release_hold(owned);
  if(owned){
   for(unsigned i=0;i<20;i++)CACHE[0x3c + i]=saved_tail[i];CACHE[0x50]=saved_tail_length;
   for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=saved[i];CACHE[0x3b]=saved_length;
@@ -85,6 +100,7 @@ int aprs_status_release(void){
  if(!active)return 0;
  unsigned c=lock();int owned=CACHE[0x3b]==13&&CACHE[0x50]==0;
  for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
+ release_hold(owned);
  if(owned)for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=' ';
  active=0;unlock(c);return owned?0:-2;
 }

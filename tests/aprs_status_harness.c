@@ -1,7 +1,7 @@
 #include "aprs_status.h"
 #include <assert.h>
 #include <string.h>
-volatile uint8_t test_cache[202];volatile uint16_t test_rx_elapsed;volatile uint8_t test_ui_foreground,test_scroll[6],test_rx_offset,test_rx_length;static unsigned notifications;
+volatile uint8_t test_cache[202];volatile uint16_t test_rx_elapsed,test_scroll_elapsed;volatile uint8_t test_ui_foreground,test_scroll[6],test_rx_offset,test_rx_length;static unsigned notifications;
 static unsigned stage;
 static void trace(unsigned n){assert(n==++stage+1);if(n==3)assert(notifications==2);if(n==4)assert(notifications==3);}
 void test_dirty(void){notifications++;}
@@ -30,12 +30,13 @@ int main(void){Api a={0};assert(aprs_status_supported(&a));
  assert(!aprs_status_publish("WAIT ISS     "));assert(test_rx_elapsed==321);assert(test_cache[0]&0x20);
  /* Simulate native acknowledgement and its RX hold before scrolling. */
  test_cache[0]&=~0x20;test_cache[2]=7;test_cache[6]=2;test_cache[4]=0xf4;test_cache[5]=1;
- for(unsigned i=0;i<8;i++){test_rx_elapsed=499;assert(!aprs_status_publish(i<4?"WAIT ISS     ":"ISS 7m       "));assert(!test_rx_elapsed&&!(test_cache[0]&0x20));}
+ test_scroll[0]=3;test_scroll[1]=14;test_scroll_elapsed=200;
+ for(unsigned i=0;i<8;i++){test_rx_elapsed=501;assert(!aprs_status_publish(i<4?"WAIT ISS     ":"ISS 7m       "));assert(!test_rx_elapsed&&!(test_cache[0]&0x20));assert(test_cache[4]==255&&test_cache[5]==255);assert(test_scroll[0]==1&&!test_scroll[1]&&!test_scroll_elapsed);}
  test_rx_elapsed=123;memcpy(before,(const void*)test_cache,202);count=notifications;
  assert(!aprs_status_release());assert(test_rx_elapsed==123&&notifications==count);
- for(unsigned i=0;i<202;i++)assert(test_cache[i]==(i>=0x2e&&i<0x3b?' ':before[i]));
+ for(unsigned i=0;i<202;i++)assert(test_cache[i]==(i>=0x2e&&i<0x3b?' ':i==4?0xf4:i==5?1:before[i]));
  assert(!aprs_status_publish("WAIT ISS     "));test_cache[0]&=~0x20;test_cache[4]=test_cache[5]=0;test_rx_elapsed=555;
- assert(!aprs_status_publish("ISS 6m       "));assert(test_cache[0]&0x20);assert(test_rx_elapsed==555);assert(!aprs_status_release());
+ assert(!aprs_status_publish("ISS 6m       "));assert(!(test_cache[0]&0x20));assert(!test_rx_elapsed);assert(test_cache[4]==255&&test_cache[5]==255);assert(!aprs_status_release());assert(!test_cache[4]&&!test_cache[5]);
  assert(!aprs_status_publish("WAIT ISS     "));test_cache[0]&=~0x20;test_cache[2]=5;test_cache[4]=0xf4;test_cache[5]=1;test_rx_elapsed=456;
  assert(!aprs_status_publish("ISS 5m       "));assert(test_cache[0]&0x20);assert(test_rx_elapsed==456);assert(!aprs_status_release());
  assert(!aprs_status_publish("WAIT ISS     "));test_cache[2]=7;test_cache[6]=0;test_rx_elapsed=321;
