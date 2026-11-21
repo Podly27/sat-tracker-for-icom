@@ -4,6 +4,7 @@
 /* Display cache only: no receive-header/mailbox publication, logging, RF or PTT. */
 int aprs_status_supported(Api*);
 int aprs_status_publish(const char*);
+int aprs_status_needs_restore(void);
 /* Read-only main-screen snapshots; call only after supported() succeeds. */
 const char *aprs_status_debug(unsigned);
 int aprs_status_end(void);

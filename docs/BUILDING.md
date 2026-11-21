@@ -21,7 +21,7 @@ Zig's target libc/compiler archives are generated in the isolated `.cache/` dire
 
 Only the target executable is built; it is never run as a Linux program. The app uses the ICAP/native radio bindings, not Linux syscalls or a host runtime. No supplied Icom firmware is needed to build this repository.
 
-The prebuilt `sd-card/IC-705/Apps/SAT.app` is the version 0.34.0 quiet-RX-refresh candidate. Hashes in `sd-card/SHA256SUMS.txt` identify shipped files. A fresh libc archive/link can produce different function ordering and a different final hash; **bit-for-bit reproducibility is not claimed**.
+The prebuilt `sd-card/IC-705/Apps/SAT.app` is the version 0.35.0 prompt-RX-recovery candidate. Hashes in `sd-card/SHA256SUMS.txt` identify shipped files. A fresh libc archive/link can produce different function ordering and a different final hash; **bit-for-bit reproducibility is not claimed**.
 
 ## Tests
 

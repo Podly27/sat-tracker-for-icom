@@ -14,7 +14,7 @@ void satellite_display_pages(const char*first,const char*second){
  char incoming[14]={0};unsigned length=strlen(first);
  for(unsigned i=0;i<13;i++)incoming[i]=i<length?first[i]:' ';
  if(memcmp(current,incoming,sizeof(current))){memcpy(current,incoming,sizeof(current));scheduled=0;}
- uint32_t now=api->ticks();if(scheduled&&(int32_t)(now-refresh)<0)return;
+ uint32_t now=api->ticks();if(scheduled&&(int32_t)(now-refresh)<0&&!aprs_status_needs_restore())return;
  RadioState r;
 #ifdef ISS_HOST_TEST
  extern unsigned display_live_mode(void);

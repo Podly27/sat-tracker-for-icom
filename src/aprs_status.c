@@ -49,6 +49,9 @@ int aprs_status_supported(Api*a){
  return a!=0;
 #endif
 }
+/* Native CI-V success can clear state without changing our cached text.
+ * Recover promptly, but do not keep enqueueing an already pending message. */
+int aprs_status_needs_restore(void){return active&&!CACHE[2]&&!(CACHE[0]&0x20);}
 int aprs_status_publish(const char*s){
  uint8_t text[13];unsigned n=0;while(s[n]&&n<13){if((unsigned char)s[n]<32||(unsigned char)s[n]>126)return -1;text[n]=s[n];n++;}
  if(s[n]||!n)return -1;for(unsigned i=n;i<13;i++)text[i]=' ';

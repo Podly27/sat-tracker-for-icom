@@ -39,5 +39,16 @@ int main(void){
  tick=248;satellite_display_text("WAIT ISS");assert(notifications==16);
  tick=249;satellite_display_text("WAIT ISS");assert(notifications==17);text("WAIT ISS     ");
  satellite_display_end();assert(!logs&&!pauses&&notifications==17);
+ /* A simulated CI-V success clears only native state: recover before 500 ms. */
+ tick=10000;satellite_display_begin(&a);satellite_display_text("WAIT ISS");assert(notifications==18);
+ test_cache[0]&=~0x20;test_cache[2]=7;test_cache[6]=2;test_cache[4]=0xf4;test_cache[5]=1;
+ tick=10100;satellite_display_text("WAIT ISS");assert(notifications==18);
+ test_cache[2]=0;tick=10200;satellite_display_text("WAIT ISS");assert(notifications==19);text("WAIT ISS     ");assert(test_cache[0]&0x20);
+ tick=10300;satellite_display_text("WAIT ISS");assert(notifications==19);
+ test_cache[0]&=~0x20;test_cache[2]=7;
+ tick=10400;satellite_display_text("WAIT ISS");assert(notifications==19);
+ tick=10700;satellite_display_text("WAIT ISS");assert(notifications==19);assert(test_cache[4]==255&&test_cache[5]==255);
+ satellite_display_end();assert(!logs&&!pauses&&notifications==19);assert(test_cache[4]==0xf4&&test_cache[5]==1);
+
  return 0;
 }
