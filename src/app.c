@@ -24,11 +24,12 @@ int app_main(Api*a){
 #ifndef ISS_HOST_TEST
  if((uintptr_t)a->radio_state!=0x2037bac9||(uintptr_t)a->clock!=0x2037bf27){a->clear();show(0,"Tracker requires pinned v8");while(!a->stop())a->sleep(250);return -1;}
 #endif
+ civ_trace_start();
  int startup=catalog_startup(a,&scan_orbit);
  if(startup==-2)return 0;
  if(startup){message(catalog_error());while(!a->stop())a->sleep(250);return -1;}
  satellite_display_begin(a);
- uint32_t prev=0,planned_at=0;double oldlat=1000,oldlon=1000;int planning=1,active=-1,session=0;const char*bridge="";
+ uint32_t prev=0,planned_at=0;double oldlat=1000,oldlon=1000;int planning=1,active=-1,session=0,logged=0;const char*bridge="";
  while(!a->stop()){
   RadioClock c;GpsPosition pos;
   if(a->clock(&c)||c.year<2025||c.year>2099||c.month<1||c.month>12||c.day<1||c.day>31||c.hour>23||c.minute>59||c.second>59){message("Set radio clock to UTC");a->sleep(250);continue;}
@@ -59,15 +60,19 @@ int app_main(Api*a){
   snprintf(lines[0],32,"%s / FM REPEATER %s",p->name,q.el>=0?"IN RANGE":"BELOW");
   snprintf(lines[1],32,"%02u:%02u:%02u UTC  GPS FIX",c.hour,c.minute,c.second);
   snprintf(lines[2],32,"AZ %03d EL %+03d %5ldkm",(int)(q.az+.5),(int)q.el,(long)(q.range+.5));
-  char f[16];freq(f,sat_control_rx()?sat_control_rx():(uint32_t)q.down_hz);snprintf(lines[3],32,"RX A %s",f);
-  freq(f,sat_control_up()?sat_control_up():(uint32_t)q.up_hz);snprintf(lines[4],32,"TX B %s SPLIT",f);
+  uint32_t rx=sat_control_rx(),up=sat_control_up();char f[16];
+  freq(f,rx?rx:(uint32_t)q.down_hz);snprintf(lines[3],32,rx?"RX A %s":"RX target %s",f);
+  freq(f,up?up:(uint32_t)q.up_hz);snprintf(lines[4],32,up?"TX B %s SPLIT":"TX target %s",f);
   if(switch_wait)snprintf(lines[5],32,"%s waits for RX",satellites[desired].name);
   else if(planning&&!p->done)snprintf(lines[5],32,"Updating satellite passes");
   else pass_status_format(lines[5],32,p->name,now,p->aos,p->los,q.el>=0,1);
   if(p->tone)snprintf(lines[6],32,"CTCSS %u.%u Hz / priority %u",p->tone/10,p->tone%10,(unsigned)active+1);
   else snprintf(lines[6],32,"No CTCSS / priority %u",(unsigned)active+1);
   lines[7][0]=0;if(strstr(bridge,"STOP:")||strstr(bridge,"ERROR")||strstr(bridge,"SAVE:"))snprintf(lines[7],32,"%s",bridge);
-  if(captured<0&&strstr(bridge,"CIV BUSY"))snprintf(lines[6],32,"%s",civ_busy_status());
+  if(captured<0&&(strstr(bridge,"CIV")||strstr(bridge,"UNSUPPORTED"))){
+   snprintf(lines[5],32,"%s",radio_session_debug());snprintf(lines[6],32,"%s",civ_busy_status());
+   if(!logged){logged=1;civ_trace_save(a);}
+  }
   for(unsigned i=0;i<8;i++)show(i,lines[i]);
   if(captured<0)satellite_display_pages("SAVE FAILED","CHECK SAT APP");
   else if(!captured)satellite_display_text(strstr(bridge,"WAIT CI-V")?"CI-V WAIT":"SAVE RADIO");

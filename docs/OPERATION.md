@@ -35,3 +35,5 @@ A transient busy reply during the original-setting snapshot is retried for at mo
 STOP phases are `Drain radio commands`, `Release status text`, and `Restore radio settings`. Display cleanup blanks only app-owned characters and makes no native redraw calls or stale UI-flag restoration. This retains the 0.22 hardware-confirmed freeze fix. The original received label is not replayed. If restoration cannot complete, check the radio; a crash, held PTT or loss of power can prevent it. The RAM snapshot is not a full radio backup.
 
 Multi-satellite changes in 0.23 have software/ARM validation and still require on-radio verification. The [earlier photograph](images/iss-tracker-radio.png) shows an older single-ISS build, not the current UI.
+
+Version 0.25 is a diagnostic candidate for the reported first-start busy condition. If capture fails, it stores read-only transport snapshots in `SATDBG.LOG` and shows the SAVE phase. Return the card after STOP/power-off for inspection. See [CI-V diagnostics](CI-V-DEBUG.md). It does not clear an unknown busy path.

@@ -1,7 +1,10 @@
 #ifndef ISS_CIV_QUEUE_H
 #define ISS_CIV_QUEUE_H
 #include <stdint.h>
+#include "icap.h"
 const char *civ_busy_status(void);
+void civ_trace_start(void);
+void civ_trace_save(Api*);
 int civ_read_probe_begin(void);
 int civ_read_probe_pending(void);
 int civ_iss_frequency(unsigned unselected,uint32_t hz);

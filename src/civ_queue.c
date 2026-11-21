@@ -16,6 +16,28 @@ static int supported(void){
  return !memcmp((const void*)0x20028a98,signature,sizeof(signature))&&
   *(const uint32_t*)0x20029860==0x2038856c&&*(const uint32_t*)0x20029848==0x203800e8;
 }
+/* Read-only transport snapshots kept in app RAM. No foreign queue reset. */
+typedef struct {uint32_t tick;uint8_t valid,kind,length,payload[7],raw[42];} CivTrace;
+static CivTrace trace[6];static int trace_ready;
+static void trace_read(unsigned slot,unsigned kind,const uint8_t*payload,unsigned length){
+ if(!trace_ready)return;CivTrace*s=&trace[slot];s->tick=*(volatile const uint32_t*)0x20380e08;s->kind=kind;s->length=length;
+ for(unsigned i=0;i<7;i++)s->payload[i]=i<length?payload[i]:0;
+ unsigned at=0;for(unsigned i=0;i<9;i++)s->raw[at++]=q[i];s->raw[at++]=q[0x82];
+ for(unsigned i=0;i<16;i++)s->raw[at++]=q[0x83+i];s->raw[at++]=q[0x103];
+ for(unsigned i=0;i<9;i++)s->raw[at++]=uart[i];for(unsigned i=0;i<6;i++)s->raw[at++]=counter[i];s->valid=1;
+}
+void civ_trace_start(void){memset(trace,0,sizeof(trace));trace_ready=supported();if(trace_ready){unsigned cpsr;__asm__ volatile("mrs %0, cpsr\n cpsid i":"=r"(cpsr)::"memory");trace_read(0,0,0,0);__asm__ volatile("msr cpsr_c, %0"::"r"(cpsr):"memory");}}
+void civ_trace_save(Api*a){
+ if(!a->write)return;unsigned cpsr;__asm__ volatile("mrs %0, cpsr\n cpsid i":"=r"(cpsr)::"memory");trace_read(5,0,0,0);__asm__ volatile("msr cpsr_c, %0"::"r"(cpsr):"memory");
+ int fd=a->open("SATDBG.LOG",1);if(fd<0)return;
+ static const char*names[]={"BOOT","FIRST","REPLY","FREE","BUSY","FAIL"};static const char hex[]="0123456789ABCDEF";
+ for(unsigned i=0;i<6&&!a->stop();i++){CivTrace*s=&trace[i];if(!s->valid)continue;char line[160];int n=snprintf(line,sizeof(line),"%s T=%lu K=%u N=%u P=",names[i],(unsigned long)s->tick,s->kind,s->length);
+  for(unsigned j=0;j<7;j++){line[n++]=hex[s->payload[j]>>4];line[n++]=hex[s->payload[j]&15];}line[n++]=' ';line[n++]='D';line[n++]='=';
+  for(unsigned j=0;j<42;j++){line[n++]=hex[s->raw[j]>>4];line[n++]=hex[s->raw[j]&15];}line[n++]='\n';
+  int at=0;while(at<n&&!a->stop()){int r=a->write(fd,line+at,n-at);if(r<=0||r>n-at)break;at+=r;}
+ }
+ a->close(fd);
+}
 static int publish(const uint8_t *payload,unsigned length){
  if(length<1||length>7)return -2;
  if(!supported())return -2;
@@ -51,6 +73,7 @@ static int owned_begin(CivOwned *t,const uint8_t *payload,unsigned length,unsign
  unsigned cpsr;__asm__ volatile("mrs %0, cpsr\n cpsid i":"=r"(cpsr)::"memory");
  int result=-1;
  /* Only claim a wholly idle path with no uncollected reply. */
+ if(trace_ready&&!trace[1].valid)trace_read(1,kind,payload,length);
  int idle=!q[1]&&!q[0x103]&&!*counter&&uart[0]<=1;
  for(unsigned i=1;i<9;i++)if(uart[i])idle=0;
  if(idle){
@@ -59,7 +82,7 @@ static int owned_begin(CivOwned *t,const uint8_t *payload,unsigned length,unsign
   memcpy(t->payload,payload,length);t->length=length;t->kind=kind;t->read_value=0;
   result=publish(payload,length);
   if(!result)t->active=1;
- }
+ }else trace_read(4,kind,payload,length);
  __asm__ volatile("msr cpsr_c, %0"::"r"(cpsr):"memory");return result;
 }
 int civ_owned_poll(CivOwned *t){
@@ -109,6 +132,7 @@ int civ_owned_poll(CivOwned *t){
    if(valid){t->read_value=value;result=1;}else result=-3;
   }else result=-3;
   if(result==1||result==2){
+   trace_read(2,t->kind,t->payload,t->length);
    /* Consume ONLY our correlated internal reply. It must not also be sent
     * to the physical REMOTE port. Restore only bytes changed by publish;
     * unchanged native fields and request/reply data are left untouched.
@@ -116,7 +140,7 @@ int civ_owned_poll(CivOwned *t){
    q[0x103]=0;counter[0]=t->counter_before[0];counter[1]=t->counter_before[1];
    uart[0]=t->uart_before[0];uart[1]=t->uart_before[1];
    uart[4]=t->uart_before[4];uart[5]=t->uart_before[5];
-   __asm__ volatile("dmb sy":::"memory");t->active=0;
+   __asm__ volatile("dmb sy":::"memory");t->active=0;trace_read(3,t->kind,t->payload,t->length);
   }
  }
  __asm__ volatile("msr cpsr_c, %0"::"r"(cpsr):"memory");return result;

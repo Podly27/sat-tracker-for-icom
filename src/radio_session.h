@@ -8,4 +8,5 @@ int radio_session_capture(Api*);
 int radio_session_restore(Api*);
 int radio_session_saved(void);
 const char *radio_session_status(void);
+const char *radio_session_debug(void);
 #endif

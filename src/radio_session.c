@@ -2,6 +2,7 @@
 #include "civ_queue.h"
 #include "tuner.h"
 #include <string.h>
+#include <stdio.h>
 /* Native ICAP callback indexes VFO cache by this byte, with >1 denoting
  * unsupported context. Pin callback instructions/literals before reading.
  */
@@ -20,8 +21,10 @@ static int selected(void){
 static CivOwned request;
 static uint32_t saved[2][6],at,busy_since;
 static unsigned original,phase_index,waiting,complete,failed,restoring,changed_selection,busy_wait;
+static unsigned last_field,accepted;static int last_result;
 static const char*message="SAVE: NOT STARTED";
 const char *radio_session_status(void){return message;}
+const char *radio_session_debug(void){static char text[32];snprintf(text,sizeof(text),"S%u W%u A%u F%u R%d OK%u",phase_index,waiting,request.active,last_field,last_result,accepted);return text;}
 int radio_session_saved(void){return complete;}
 /* The only selections made before commit are reversible A/B selections.
  * Initial DUP operation is refused because 0F cannot independently report
@@ -35,7 +38,7 @@ static int wait_reply(Api*a){
  return 1;
 }
 static int submit(Api*a,unsigned field,uint32_t value,int read){
- int r=read?civ_setting_read(&request,field):civ_setting_write(&request,field,value);
+ int r=read?civ_setting_read(&request,field):civ_setting_write(&request,field,value);last_field=field;last_result=r;
  if(r){
   /* A transient foreign request must not poison the whole startup snapshot.
    * Do not clear/release any transport state which we do not own. */
@@ -45,7 +48,7 @@ static int submit(Api*a,unsigned field,uint32_t value,int read){
   }
   failed=1;message=r==-1?"RESTORE/SAVE: CIV BUSY":"RESTORE/SAVE: UNSUPPORTED";return -1;
  }
- busy_wait=0;
+ busy_wait=0;accepted++;
  if(!read&&field==CIV_SELECT&&!restoring)changed_selection=1;
  waiting=1;at=a->ticks();return 0;
 }
