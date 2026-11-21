@@ -3,6 +3,7 @@
 #include "gps.h"
 #include "tle_store.h"
 #include "pass_status.h"
+#include "satellite_display.h"
 #include "civ_queue.h"
 #include "tuner.h"
 #ifdef ISS_RX_CONTROL
@@ -16,8 +17,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#define APP_DISPLAY "ISS tracker"
-#define APP_TLE "ISS.TLE"
+#define APP_DISPLAY "satellites"
+#define APP_TLE "satellites.TLE"
 #define SAT_NAME "ISS"
 static Api *api;static Orbit orbit;static Tuner tuner;static char linebuf[8][32];
 static const char *bridge="CIV PROBE NOT RUN";
@@ -42,7 +43,7 @@ static const char *control(Api *a,uint32_t down,uint32_t up,int gps,int valid){
 }
 static double lat,lon,alt;static uint32_t nextscan,aos,los,scanned,scanend;static int inpass;
 static void show(unsigned n,const char*s){api->line(n,s);}
-static void status(const char *text){api->clear();show(0,APP_DISPLAY " / IC-705");show(2,text);show(7,bridge);}
+static void status(const char *text){api->clear();show(0,APP_DISPLAY " / IC-705");show(2,text);show(7,bridge);satellite_display_text(text);}
 static void wait_error(const char *s){show(0,APP_DISPLAY " / IC-705");show(2,s);show(4,"No radio settings changed");while(!api->stop())api->sleep(250);}
 static void pass_reset(uint32_t now){aos=los=0;nextscan=now;scanned=0;scanend=now+86400;inpass=0;}
 static void pass_work(void){
@@ -79,19 +80,20 @@ int app_main(Api *a){
  int tle=tle_startup(a,&orbit);
  if(tle==-2)return 0;
  if(tle){wait_error("No usable ISS TLE / update SD");return -4;}
+ satellite_display_begin(a);
  uint32_t prev=0;double oldlat=1000,oldlon=1000;int startup_ready=0;
  while(!a->stop()){
   RadioClock c;if(a->clock(&c)<0||c.year<2025||c.year>2099||c.month<1||c.month>12||c.day<1||c.day>31){bridge=startup_ready?control(a,0,0,0,0):"STARTUP / NO RADIO CHANGES";status("Set radio clock to UTC");a->sleep(250);continue;}
   uint32_t now=utc_seconds(c.year,c.month,c.day,c.hour,c.minute,c.second);
   GpsPosition pos;int gps=gps_read(&pos);
-  if(gps!=GPS_OK){bridge=startup_ready?control(a,0,0,0,0):"STARTUP / NO RADIO CHANGES";status(gps==GPS_NO_FIX?"GPS: WAITING FOR FIX":gps==GPS_UNSUPPORTED?"GPS: FIRMWARE MISMATCH":gps==GPS_UNSTABLE?"GPS: UPDATING POSITION":"GPS: INVALID COORDINATES");show(4,"Use internal GPS / clear sky");a->sleep(1000);continue;}
+  if(gps!=GPS_OK){bridge=startup_ready?control(a,0,0,0,0):"STARTUP / NO RADIO CHANGES";status(gps==GPS_NO_FIX?"Waiting for GPS":gps==GPS_UNSUPPORTED?"GPS: FIRMWARE MISMATCH":gps==GPS_UNSTABLE?"GPS: UPDATING POSITION":"GPS: INVALID COORDINATES");show(4,"Use internal GPS / clear sky");a->sleep(1000);continue;}
   lat=pos.lat;lon=pos.lon;alt=0;
   if(!prev||now<prev||now-prev>5||fabs(oldlat-lat)>0.02||fabs(oldlon-lon)>0.02||(los&&now>los))pass_reset(now);
   oldlat=lat;oldlon=lon;prev=now;
-  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status(APP_TLE " expired (>7 days)");show(4,"Restart to check for new TLE");show(5,"Update ISS.TLE on SD card");a->sleep(1000);continue;}
+  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status("TLE expired (>7 days)");show(4,"Restart to check for new TLE");show(5,"Update satellites.TLE on SD");a->sleep(1000);continue;}
   if(!startup_ready){
    pass_work();
-   status("Calculating next AOS / LOS");
+   status("Finding next ISS pass");
    snprintf(linebuf[3],32,"Search: %lu%%",(unsigned long)(scanned*100/2881));show(3,linebuf[3]);
    show(5,"STOP cancels startup");
    if(!los&&nextscan<=scanend){a->sleep(10);continue;}
@@ -124,11 +126,15 @@ int app_main(Api *a){
   /* Keep operational errors visible, without coordinates or ACK diagnostics. */
   if(strstr(bridge,"STOP:")||strstr(bridge,"ERROR")||strstr(bridge,"SAVE:"))snprintf(linebuf[7],32,"%s",bridge);
   for(unsigned i=0;i<8;i++)show(i,linebuf[i]);
+  satellite_display_text(linebuf[5]);
   a->sleep(100);
  }
 #ifdef ISS_SAT_CONTROL
+ if(startup_ready)sat_control_finish(a);
+#endif
+ satellite_display_end();
+#ifdef ISS_SAT_CONTROL
  if(!startup_ready)return 0;
- sat_control_finish(a);
  a->clear();show(0,APP_DISPLAY " / STOP");
  uint32_t restore_start=a->ticks();int restored;
  while((restored=radio_session_restore(a))==0&&a->ticks()-restore_start<30000){

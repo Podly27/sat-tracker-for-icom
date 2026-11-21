@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-static TleHttp download;
-static const char *files[]={"ISS.TLE","ISS.BAK","SATELITE.TLE"};
+static const char *files[]={"satellites.TLE","satellites.BAK"};
 static int read_text(Api*a,const char*name,char*buf,unsigned size){
  int fd=a->open(name,0);if(fd<0)return -1;unsigned used=0;int n=0;
  while(used<size-1){
@@ -21,8 +20,8 @@ static int parse(Orbit*out,char*text){
  return orbit_init(out,one,two);
 }
 int tle_store_load(Api*a,uint32_t now,Orbit*out,unsigned*slot){
- char text[512];Orbit candidate;double best=8*86400;int valid=0;*slot=3;
- for(unsigned i=0;i<3&&!a->stop();i++){
+ char text[512];Orbit candidate;double best=8*86400;int valid=0;*slot=2;
+ for(unsigned i=0;i<2&&!a->stop();i++){
   if(read_text(a,files[i],text,sizeof(text))<0||parse(&candidate,text))continue;
   double age=fabs((double)now-candidate.epoch);
   if(age<=7*86400&&age<best){*out=candidate;*slot=i;best=age;valid=1;}
@@ -30,7 +29,7 @@ int tle_store_load(Api*a,uint32_t now,Orbit*out,unsigned*slot){
  return valid?0:-1;
 }
 int tle_store_save(Api*a,unsigned protected_slot,const char*one,const char*two){
- /* The current valid slot (or legacy SATELITE.TLE) is never opened for writing.
+ /* The current valid slot  is never opened for writing.
   * A torn/failed write affects only the alternate slot; next boot validates both. */
  unsigned dest=protected_slot==0?1:0;char text[160],check[160];
  int length=snprintf(text,sizeof(text),"ISS (ZARYA)\n%s\n%s\n",one,two);
@@ -51,7 +50,7 @@ static int radio_now(Api*a,uint32_t*now){
  *now=utc_seconds(c.year,c.month,c.day,c.hour,c.minute,c.second);return 0;
 }
 int tle_startup(Api*a,Orbit*out){
- a->clear();a->line(0,"ISS tracker / STARTUP 0.18");a->line(1,"Checking TLE epoch / UTC");
+ a->clear();a->line(0,"satellites / STARTUP 0.20");a->line(1,"Checking TLE epoch / UTC");
  uint32_t now=0;while(!a->stop()&&radio_now(a,&now)){a->line(3,"Set radio clock to UTC");a->sleep(250);}
  if(a->stop())return -2;
  unsigned slot;int valid=tle_store_load(a,now,out,&slot)==0;
@@ -60,7 +59,7 @@ int tle_startup(Api*a,Orbit*out){
  if(old){
   a->line(2,valid?"TLE older than 24h":"No usable cached TLE");
   if(tle_network_supported(a)&&a->net_ready()==0){
-   const char*source="";int r=tle_network_fetch(a,&download,&source);
+   TleHttp download;const char*source="";int r=tle_network_fetch(a,&download,&source);
    if(r==-2||a->stop())return -2;
    if(!r){
     Orbit candidate;

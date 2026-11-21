@@ -17,11 +17,11 @@ On Windows, activate with `.venv\Scripts\activate` and use `python`. macOS is th
 
 The script targets ARMv7-A Cortex-A9, ARM mode, softfp/NEON, links at `0x20831000`, and packages a 64-byte ICAP header. It checks the code+BSS load-window budget and writes the CRC. Declared stack size is 8192 bytes.
 
-Zig's target libc/compiler archives are generated in the isolated `.cache/` directory. `build/` contains objects, ELF, `ISS.app` and a JSON size/hash report. Neither cache nor intermediate binaries are committed.
+Zig's target libc/compiler archives are generated in the isolated `.cache/` directory. `build/` contains objects, ELF, `satellites.app` and a JSON size/hash report. Neither cache nor intermediate binaries are committed.
 
 Only the target executable is built; it is never run as a Linux program. The app uses the ICAP/native radio bindings, not Linux syscalls or a host runtime. No supplied Icom firmware is needed to build this repository.
 
-The prebuilt `sd-card/IC-705/Apps/ISS.app` is the locally prepared v15 standalone artifact. Hashes in `sd-card/SHA256SUMS.txt` identify shipped files. Source object files were checked against that development build. A fresh libc archive/link can produce different function ordering and a different final hash; **bit-for-bit reproducibility is not claimed**.
+The prebuilt `sd-card/IC-705/Apps/satellites.app` is the version 0.20.0 standalone artifact. Hashes in `sd-card/SHA256SUMS.txt` identify shipped files. A fresh libc archive/link can produce different function ordering and a different final hash; **bit-for-bit reproducibility is not claimed**.
 
 ## Tests
 
@@ -39,8 +39,8 @@ Device/Unicorn tests from development use privately supplied Icom images and are
 ```text
 src/                       Application, pinned GPS/CI-V/session bindings
 vendor/sgp4/               Unmodified upstream SGP4 C source and licence
-sd-card/IC-705/Apps/        Prebuilt ISS.app and reserved ISS.CFG
-                            ISS.TLE is generated locally and git-ignored
+sd-card/IC-705/Apps/        Prebuilt satellites.app and reserved satellites.CFG
+                            satellites.TLE is generated locally and git-ignored
 tools/build.py             Standalone application builder
 tools/update_tle.py        Validated ISS TLE download/extraction
 tests/fixtures/            Historical orbit test data, not for installation

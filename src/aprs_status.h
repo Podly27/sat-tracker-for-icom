@@ -5,4 +5,6 @@
 int aprs_status_supported(Api*);
 int aprs_status_publish(const char*);
 int aprs_status_end(void);
+/* Optional diagnostic callback runs only with interrupts restored. */
+int aprs_status_end_trace(void (*trace)(unsigned));
 #endif

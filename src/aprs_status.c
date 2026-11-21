@@ -39,12 +39,20 @@ int aprs_status_publish(const char*s){
  for(unsigned i=0;i<13;i++){CACHE[0x2e + i]=text[i];last[i]=text[i];}
  CACHE[0x3b]=(uint8_t)n;CACHE[0]|=0x20;CACHE[0x51]|=8;unlock(c);dirty();return 0;
 }
-int aprs_status_end(void){
- if(!active)return 0;unsigned c=lock();int owned=1;
+int aprs_status_end_trace(void (*trace)(unsigned)){
+ if(trace)trace(2);
+ if(!active){if(trace)trace(4);return 0;}
+ unsigned c=lock();int owned=1;
  for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
  if(owned){
   for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=saved[i];CACHE[0x3b]=saved_length;
   CACHE[0]=(CACHE[0]&~0x20)|saved_visible;CACHE[0x51]=(CACHE[0x51]&~8)|saved_update;
  }
- active=0;unlock(c);if(owned)dirty();return owned?0:-2;
+ active=0;unlock(c);
+ if(trace)trace(3);
+ if(owned)dirty();
+ if(trace)trace(4);
+ return owned?0:-2;
 }
+
+int aprs_status_end(void){return aprs_status_end_trace(0);}

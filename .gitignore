@@ -14,3 +14,7 @@ sd-card/IC-705/Apps/ISS.BAK
 *.elf
 *.o
 *.pdf
+
+sd-card/IC-705/Apps/satellites.TLE
+sd-card/IC-705/Apps/satellites.BAK
+*.LOG

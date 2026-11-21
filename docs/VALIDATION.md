@@ -11,7 +11,7 @@ The operator reported:
 - Software-confirmed uplink corrections during operator-controlled TX.
 - Successful return of original settings after STOP in the predecessor standalone build.
 
-Version 0.15.0 is the rename to `ISS.app` / `ISS.CFG` / `ISS.TLE` and the displayed name `ISS tracker`. Its four controller/session object files were byte-identical to the preceding build when checked locally. That is useful regression evidence, but does not turn it into an independently hardware-tested release. The renamed files still need device confirmation.
+Version 0.15.0 is the rename to `satellites.app` / `satellites.CFG` / `satellites.TLE` and the displayed name `ISS tracker`. Its four controller/session object files were byte-identical to the preceding build when checked locally. That is useful regression evidence, but does not turn it into an independently hardware-tested release. The renamed files still need device confirmation.
 
 No independent spectrum/frequency-counter measurement of active-TX Doppler was performed by the development agent. Radio/CI-V readback and a transaction counter do not establish RF accuracy.
 
@@ -70,3 +70,9 @@ The owner confirms that ISS tracking works and that FRQTEXT test 5 finally shows
 Thirty-seven host test methods pass. New tests use the actual tiny formatter and cover UTC day/month/year rollover, leap day, rounded-up remaining minutes, expired AOS and no-pass/search states. The ARM build uses 77,364 code bytes plus 3,640 BSS bytes (81,004 total, within the 81,920-byte loader budget), with an 8,192-byte stack. Radio-control/restoration source is unchanged. These new display states still need an on-radio check.
 
 The compiled 0.19.0 ARM startup also passed fresh-cache and stale-cache refresh scenarios with mocked network/SD callbacks: respectively zero and one HTTPS connections, alternate-slot storage preserved the original cache, and STOP during the initial search returned with no CI-V commands. Observed stack use was 5,240 bytes. This does not validate the real network/SD driver or the new pass-status LCD layout.
+
+## 0.20.0 integration
+
+The owner reports FRQTEXT test 6 no longer freezes on STOP. This does not establish the original cause, nor independently validate the combined app. The integration retains file-close checkpoints and 750 ms pacing during display cleanup, with CI-V control finished before display teardown and radio restoration after it.
+
+Thirty-eight host methods pass, including actual cache publication/restoration, scrolling, FM/TX gating, partial log writes, closed checkpoints, no-op cleanup before publication, and STOP ordering. Native binding and hardware-driver behavior remain outside those host tests. The compiled ARM fresh/stale startup tests use the renamed cache paths and pass with 6,640 bytes observed stack use within 8,192 allocated. HTTPS/SD are mocked in that check. The startup HTTP parser moved from persistent BSS to startup stack to fit the fixed loader memory budget; no target memory limit was increased.

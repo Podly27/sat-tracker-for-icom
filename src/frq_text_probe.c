@@ -1,6 +1,6 @@
 /* Experimental APRS-derived native display-cache test. It publishes into
  * the final UI cache, not the RX packet mailbox. No code patching, firmware
- * writes, CI-V, PTT, RX-history events or SD writes. Hardware UI test pending. */
+ * writes, CI-V, PTT or RX-history events. Test 6 writes STOP trace to SD. */
 #include "icap.h"
 #include "gps.h"
 #include "orbit.h"
@@ -11,6 +11,20 @@
 #include <math.h>
 static unsigned ui_profile;
 static Orbit satellite;static char data[512];
+static Api *debug_api;static unsigned trace_count;static char trace_log[512];
+static const char *stages[]={"RUNNING / before STOP","STOP detected","Before cache lock/restore","Cache/IRQ restore returned","Native notification returned","Before redraw flags","Redraw flags done","Returning from app_main"};
+static void trace(unsigned stage){
+ char line[64];int n=snprintf(line,sizeof(line),"%u %s\n",stage,stages[stage]);
+ if(n>0&&trace_count+(unsigned)n<sizeof(trace_log)){memcpy(trace_log+trace_count,line,n);trace_count+=n;trace_log[trace_count]=0;}
+ debug_api->line(0,"FRQ STOP DEBUG / 6");
+ snprintf(line,32,"STOP stage %u / 7",stage);debug_api->line(2,line);
+ debug_api->line(3,stages[stage]);
+ /* Each stage is closed before the next potentially blocking native call.
+  * The record before a blocked write remains the previous closed record. */
+ if(debug_api->write){int fd=debug_api->open("FRQSTOP.LOG",1);
+  if(fd>=0){int at=0;while(at<(int)trace_count){int k=debug_api->write(fd,trace_log+at,trace_count-at);if(k<=0||k>(int)trace_count-at)break;at+=k;}debug_api->close(fd);}}
+ debug_api->sleep(750);
+}
 #ifdef ISS_HOST_TEST
 extern int probe_ui_supported(Api*);
 extern unsigned probe_ui_code(void);
@@ -47,11 +61,13 @@ __attribute__((section(".entry")))
 #endif
 int app_main(Api*a){
  if(!a||a->abi!=3||a->radio!=0x705||a->size<0x54||!a->line||!a->clear||!a->sleep||!a->stop||!a->clock||!a->radio_state||!a->open||!a->read||!a->close)return -1;
- a->clear();a->line(0,"FRQ TEXT TEST / 5 APRS FM");
+ debug_api=a;trace_count=0;trace_log[0]=0;
+ a->clear();a->line(0,"FRQ TEXT TEST / 6 STOP DEBUG");
  a->line(1,"No tuning / no PTT / no RX log");
  int drawn=0,cache_supported=aprs_status_supported(a);unsigned attempts=0,main_count=0,other_count=0,last_fg=256,last_mode=0,seen[3]={256,256,256};
  if(!probe_ui_supported(a)){a->line(3,"Unsupported native UI bindings");goto done;}
  if(elements(a,"ISS.TLE")&&elements(a,"SATELITE.TLE")){a->line(3,"TLE missing / invalid");goto done;}
+ trace(0);
  a->line(4,"EXIT hides this Apps window");a->line(5,"Then check text below frequency");
  while(!a->stop()){
   RadioClock c;GpsPosition p;Look q;RadioState radio={0};char text[40];
@@ -84,7 +100,13 @@ int app_main(Api*a){
   a->sleep(500);
  }
  done:
- if(drawn){aprs_status_end();probe_redraw();}
  while(!a->stop())a->sleep(100);
+ trace(1);
+ if(drawn){
+  int result=aprs_status_end_trace(trace);
+  char result_text[32];snprintf(result_text,sizeof(result_text),"Cache restore result: %d",result);a->line(4,result_text);
+  trace(5);probe_redraw();trace(6);
+ }
+ trace(7);
  return 0;
 }

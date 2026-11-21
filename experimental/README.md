@@ -1,6 +1,6 @@
 # Experimental radio checks
 
-These are separate diagnostic apps, not a replacement for the tracker. Stop each app before starting the next. They make no CI-V/PTT commands and do not write to SD. Device results remain necessary.
+These are separate diagnostic apps, not a replacement for the tracker. Stop each app before starting the next. They make no CI-V/PTT commands. FRQTEXT test 6 writes its diagnostic FRQSTOP.LOG to SD. Device results remain necessary.
 
 ## 1. TLEDNS.app — hostname
 
@@ -39,3 +39,11 @@ Build: `python3 tools/build.py --frq-probe`.
 The Apps scanner has an eight-file limit and macOS `._*.app` metadata can consume entries. For this test round, keep only the four named test apps in Apps. Preserve other apps in a backup directory outside Apps, retain CFG/TLE and matching firmware support BIN files, and move macOS app sidecars outside Apps before ejecting the card.
 
 The integrated `sd-card/IC-705/Apps/ISS.app` is now version 0.18.0 and **does configure/tune the radio** after valid TLE, GPS and pass search. It is distinct from these read-only/control-free probes. Its network and SD-write startup integration still needs device verification.
+
+## FRQTEXT test 6 — STOP freeze localization
+
+The owner confirms main-frequency text visibility in test 5, but reports a freeze on STOP in FRQTEXT only. Test 6 keeps the same publishing and cleanup operations, adding visible stages and a bounded `FRQSTOP.LOG` through the normal ICAP file API. Each snapshot is closed before proceeding; each stage pauses 750 ms. This timing changes scheduling and may itself change the symptom. No CI-V/PTT, firmware patches or changes to ISS.app.
+
+Set FM, start FRQTEXT, wait for computed ISS text, use EXIT to inspect the main frequency screen, reopen the app and choose STOP. Allow about six seconds for the staged exit. Record the last visible stage if it freezes. After normal power-off, return the card to the computer so FRQSTOP.LOG can be read. Do not remove SD while running.
+
+Stages: 0 running; 1 STOP observed; 2 before cache lock/restore; 3 cache/interrupt restoration returned; 4 native notification returned; 5 before redraw flags; 6 redraw flags done; 7 immediately before returning from app_main. Stage 7 proves the app reached its return path, not that the loader completed unloading. A blocked log write/close or diagnostic display callback can also stop progress; the previous closed snapshot is only a localization clue. The log is in the same app-relative directory used for ISS.TLE, normally IC-705/Apps.

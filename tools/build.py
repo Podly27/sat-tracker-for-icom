@@ -13,7 +13,7 @@ def main():
  # Generate target libc/compiler archives in an isolated, repository-local cache.
  cache.mkdir(exist_ok=True);bootstrap=out/'toolchain-check.c';bootstrap.write_text('int main(void){return 0;}\n')
  subprocess.run(cc+flags+[str(bootstrap),'-static','-o',str(out/'toolchain-check.elf')],check=True,env=env)
- sources=['src/app.c','src/pass_status.c','src/tle_store.c','src/tle_network.c','src/orbit.c','src/gps.c','src/civ_queue.c','src/tiny.c','src/sat_control.c','src/tx_control.c','src/radio_session.c','vendor/sgp4/SGP4.c'];objects=[]
+ sources=['src/app.c','src/satellite_display.c','src/aprs_status.c','src/pass_status.c','src/tle_store.c','src/tle_network.c','src/orbit.c','src/gps.c','src/civ_queue.c','src/tiny.c','src/sat_control.c','src/tx_control.c','src/radio_session.c','vendor/sgp4/SGP4.c'];objects=[]
  if args.probe:sources=['src/network_probe.c','src/tle_network.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
  if args.display_probe:sources=['src/display_probe.c','src/gps.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
  if args.frq_probe:sources=['src/frq_text_probe.c','src/aprs_status.c','src/gps.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
@@ -31,7 +31,7 @@ def main():
    if section['sh_flags']&2 and section['sh_type']!='SHT_NOBITS' and section['sh_size']:
     at=section['sh_addr']-base;assert at>=0 and at+section['sh_size']<=len(image);image[at:at+section['sh_size']]=section.data()
   assert len(image)+bss<0x14000,'ICAP image/BSS memory budget exceeded'
-  header=bytearray(64);struct.pack_into('<4sHH8I',header,0,b'ICAP',3,64,1,0x07051405,len(image),bss,elf['e_entry']-base,0,8192,zlib.crc32(image));struct.pack_into('<I',header,56,4);header[40:56]=b'ISS tracker\0'.ljust(16,b'\0');app=bytes(header)+image
+  header=bytearray(64);struct.pack_into('<4sHH8I',header,0,b'ICAP',3,64,1,0x07051405,len(image),bss,elf['e_entry']-base,0,8192,zlib.crc32(image));struct.pack_into('<I',header,56,4);header[40:56]=b'satellites\0'.ljust(16,b'\0');app=bytes(header)+image
 
   if args.probe:
    header[40:56]=(b'TLE HTTPS IP\0' if args.probe_ip else b'TLE HTTPS DNS\0').ljust(16,b'\0');app=bytes(header)+image
@@ -39,5 +39,5 @@ def main():
    header[40:56]=b'ISS DISPLAY\0'.ljust(16,b'\0');app=bytes(header)+image
   if args.frq_probe:
    header[40:56]=b'FRQ TEXT TEST\0'.ljust(16,b'\0');app=bytes(header)+image
-  (out/('FRQTEXT.app' if args.frq_probe else 'DISPCHK.app' if args.display_probe else 'TLEIP.app' if args.probe_ip else 'TLEDNS.app' if args.probe else 'ISS.app')).write_bytes(app);report={'version':'0.17.0-probe' if args.probe or args.display_probe or args.frq_probe else '0.19.0','display_name':'FRQ TEXT TEST' if args.frq_probe else 'ISS DISPLAY' if args.display_probe else 'TLE HTTPS IP' if args.probe_ip else 'TLE HTTPS DNS' if args.probe else 'ISS tracker','code_bytes':len(image),'bss_bytes':bss,'stack_bytes':8192,'target':('IC-705 705E140 / SQ6EMM v8/v14 APRS display-cache probe' if args.frq_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 native text dialog probe' if args.display_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 network probe' if args.probe else 'IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405'),'sha256':hashlib.sha256(app).hexdigest()};(out/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+  (out/('FRQTEXT.app' if args.frq_probe else 'DISPCHK.app' if args.display_probe else 'TLEIP.app' if args.probe_ip else 'TLEDNS.app' if args.probe else 'satellites.app')).write_bytes(app);report={'version':'frq-test-6-stop-debug' if args.frq_probe else '0.17.0-probe' if args.probe or args.display_probe else '0.20.0','display_name':'FRQ TEXT TEST' if args.frq_probe else 'ISS DISPLAY' if args.display_probe else 'TLE HTTPS IP' if args.probe_ip else 'TLE HTTPS DNS' if args.probe else 'satellites','code_bytes':len(image),'bss_bytes':bss,'stack_bytes':8192,'target':('IC-705 705E140 / SQ6EMM v8/v14 APRS display-cache probe' if args.frq_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 native text dialog probe' if args.display_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 network probe' if args.probe else 'IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405'),'sha256':hashlib.sha256(app).hexdigest()};(out/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 if __name__=='__main__':main()

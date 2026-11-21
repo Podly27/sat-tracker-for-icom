@@ -1,4 +1,4 @@
-# ISS orbital data: ISS.TLE
+# ISS orbital data: satellites.TLE
 
 The application needs a real ISS **NORAD 25544** TLE pair. It does not need a TLE for another satellite or a location file. Your observer position comes from the radio's internal GPS.
 
@@ -22,7 +22,7 @@ An update can fail with that setting even if the source is reachable, because it
 ## Manual creation
 
 1. Open a source above and find ISS, satellite number **25544**.
-2. Save a plain ASCII text file named `ISS.TLE`, containing an optional satellite name followed by the complete two element lines:
+2. Save a plain ASCII text file named `satellites.TLE`, containing an optional satellite name followed by the complete two element lines:
 
    ```text
    ISS (ZARYA)
@@ -32,12 +32,12 @@ An update can fail with that setting even if the source is reachable, because it
 
    The angle-bracket lines above are placeholders, **not usable orbital data**.
 3. Keep all spaces, decimal points, signs and checksum digits. Avoid a word processor or formatting that wraps lines.
-4. Validate/extract it with `python3 tools/update_tle.py --input your-file.txt --output ISS.TLE`.
-5. Copy it to `IC-705/Apps/ISS.TLE`, safely eject the card and restart the stopped application.
+4. Validate/extract it with `python3 tools/update_tle.py --input your-file.txt --output satellites.TLE`.
+5. Copy it to `IC-705/Apps/satellites.TLE`, safely eject the card and restart the stopped application.
 
 Both LF and CRLF input are accepted. The name line is descriptive; the actual identity is checked in both element lines. Do not copy JSON/OMM data into this text file; this release expects the traditional TLE format.
 
-The file in `tests/fixtures/` is historical test data. It is deliberately **not** an installation file or a claim to current ISS elements. The repository does not ship a predated operational `ISS.TLE`.
+The file in `tests/fixtures/` is historical test data. It is deliberately **not** an installation file or a claim to current ISS elements. The repository does not ship a predated operational `satellites.TLE`.
 
 ## How often to update
 
@@ -51,8 +51,8 @@ The seven-day application cutoff is a protective limit. It does not establish th
 
 | Symptom | Check |
 |---|---|
-| `ISS.TLE invalid / missing` | Exact path/name, plain text, both 25544 lines, length, checksums and supported orbital fields. |
-| `ISS.TLE expired (>7 days)` | The element epoch **and** radio date/time in UTC. |
+| `satellites.TLE invalid / missing` | Exact path/name, plain text, both 25544 lines, length, checksums and supported orbital fields. |
+| `satellites.TLE expired (>7 days)` | The element epoch **and** radio date/time in UTC. |
 | File downloads but is rejected | A source may have returned HTML/JSON, an incomplete pair, or elements outside the allowed age window. |
 | Predicted pass differs from expectation | Check fresh elements, UTC/date, live GPS, and the antenna horizon. Predictions use a geometric horizon and sampled search. |
 | Updated file is not used | Stop the app fully, replace the card file, then launch it again. There is no live reload in this release. |
@@ -63,6 +63,6 @@ Format reference: [CelesTrak NORAD Two-Line Element Set Format](https://celestra
 
 The tracker checks SD element epochs before GPS acquisition. Data within 24 hours is reused; otherwise, it attempts CelesTrak HTTPS and then AMSAT. Downloaded elements must validate and be within 24 hours of radio UTC. A download failure can fall back to a usable cache within seven days. No usable TLE means no tuning.
 
-`ISS.TLE` and `ISS.BAK` are alternating cache slots. The tracker never truncates its currently selected valid slot; it writes the other, closes it and verifies it by reading it back. At next startup both slots are checked. `SATELITE.TLE` is accepted read-only during migration. The PC updater can continue writing ISS.TLE normally. Do not remove the card or power during a write; native file close/readback is not a filesystem-wide atomicity guarantee.
+`satellites.TLE` and `satellites.BAK` are alternating cache slots. The tracker never truncates its currently selected valid slot; it writes the other, closes it and verifies it by reading it back. At next startup both slots are checked. `SATELITE.TLE` is accepted read-only during migration. The PC updater can continue writing satellites.TLE normally. Do not remove the card or power during a write; native file close/readback is not a filesystem-wide atomicity guarantee.
 
 The standalone probes do not save downloads. The 0.18.0 tracker does. Successful HTTPS probing on hardware is confirmed; the combined startup/SD-write flow still requires its own hardware test.

@@ -54,7 +54,7 @@ The check:
 5. Shows `PASS: ISS TLE <=24h` only after those checks succeed.
 6. Closes every successfully opened handle before waiting for STOP.
 
-**No frequency, mode, VFO, SPLIT or PTT commands are present in the probe. It does not write to the SD card and does not replace ISS.TLE.** Replacing the tracker with it is unnecessary: it is a separate diagnostic app.
+**No frequency, mode, VFO, SPLIT or PTT commands are present in the probe. It does not write to the SD card and does not replace satellites.TLE.** Replacing the tracker with it is unnecessary: it is a separate diagnostic app.
 
 The probe makes at most two requests per launch. Transport operations use finite timeouts and the application checks STOP between calls. Firmware DNS/TLS internals may have additional blocking behavior that cannot be bounded by these host tests. HTTP redirects, compression, chunk trailers, malformed or oversized input are rejected. This conservative probe can reject a legitimate server response; report the displayed error rather than weakening validation.
 
@@ -64,7 +64,7 @@ Device verification needed: firmware version, source hostname, final status/epoc
 
 The supplied APRS photographs demonstrate native RX text under the frequency and a native position/detail dialog. Analysis of APRS.APP confirms it publishes into the original Icom receive-message path: an IC-705 E profile references a receive mailbox at `0x203e23c1`, pending flag `0x205d9dab` bit `0x40`, and receiver-state byte `0x203e212f`. It is not simply drawing arbitrary text through `Api.line()`.
 
-Sending invented APRS/D-STAR receive messages to show satellite status could affect receive history, callsigns and native packet handling. The tracker does not do that. `Api.line()` still writes its Apps window. The seven-line popup at offset 0x84 is a separate native information-dialog helper; the original English text table contains “Failed to connect to the repeater.” followed by six empty lines. It is not the APRS compass/detail API, and is not invoked by the network probe. The separate [`DISPCHK.app`](../experimental/DISPCHK.app) tests this information dialog with computed ISS azimuth/elevation, range and a simple text direction marker. It reads GPS plus ISS.TLE or SATELITE.TLE and never writes native receive-message mailboxes. Close with BACK and use Apps STOP. It shows a single snapshot; a live graphic compass and text under the frequency are not implemented.
+Sending invented APRS/D-STAR receive messages to show satellite status could affect receive history, callsigns and native packet handling. The tracker does not do that. `Api.line()` still writes its Apps window. The seven-line popup at offset 0x84 is a separate native information-dialog helper; the original English text table contains “Failed to connect to the repeater.” followed by six empty lines. It is not the APRS compass/detail API, and is not invoked by the network probe. The separate [`DISPCHK.app`](../experimental/DISPCHK.app) tests this information dialog with computed ISS azimuth/elevation, range and a simple text direction marker. It reads GPS plus satellites.TLE or SATELITE.TLE and never writes native receive-message mailboxes. Close with BACK and use Apps STOP. It shows a single snapshot; a live graphic compass and text under the frequency are not implemented.
 
 ![Design proposal only, not implemented: satellite status under the frequency and a dedicated detail view](images/native-sat-proposal.svg)
 
@@ -91,7 +91,7 @@ A separate experimental v8-only FRQTEXT app now tests native drawing at x=12/y=9
 
 The operator reported both hostname and numeric-IP checks succeeding on the IC-705: TCP C=0/E=0, CelesTrak TLS C=0/E=0, valid ISS elements with a +9-hour epoch offset. The reported connect times were 2,898 ms (hostname) and 7,157 ms (numeric IP). AMSAT was not attempted because CelesTrak succeeded. DNS failure is therefore not demonstrated by those tests. The shortened information dialog was also confirmed to fit above CLOSE.
 
-Version 0.18.0 integrates hostname HTTPS retrieval into tracker startup when the cache is missing or older than 24 hours. See the operating/TLE notes for the two-slot ISS.TLE / ISS.BAK storage and offline behavior. The integrated SD write is not yet device-confirmed.
+Version 0.18.0 integrates hostname HTTPS retrieval into tracker startup when the cache is missing or older than 24 hours. See the operating/TLE notes for the two-slot satellites.TLE / satellites.BAK storage and offline behavior. The integrated SD write is not yet device-confirmed.
 
 The first FRQTEXT computed a position in its own Apps window but showed no main-screen text. Its layer-18 draw target is the Apps surface. Native normal-radio text call sites use surface 12 (480x123); test 3 reproduces the native text argument layout on that surface at x=12/y=96. It remains an experimental direct app-task draw and may be overwritten by normal rendering. It now records UI state, mode, TX, MAIN/ELSE counts and DRAW attempts, plus the last draw state. Reopen its Apps window after checking the normal frequency screen to inspect those counters. Both v8/v14 UI bindings are pinned, without changing the tracker's v8-only control target.
 
@@ -109,4 +109,4 @@ The operator confirms that the normal screen shows FM while test 4 returns cache
 
 ### Latest hardware result: FRQ test 5
 
-Text below the frequency is now confirmed by the owner. STOP freezes the radio only in FRQTEXT, while ISS STOP works. Do not treat the earlier ARM cleanup checks as hardware validation. Version 0.19.0 therefore keeps this backend out of ISS.app and shows its new English pass statuses in the Apps window. Native display cleanup remains an open defect.
+Text below the frequency is now confirmed by the owner. STOP freezes the radio only in FRQTEXT, while ISS STOP works. Do not treat the earlier ARM cleanup checks as hardware validation. Version 0.19.0 therefore keeps this backend out of satellites.app and shows its new English pass statuses in the Apps window. Native display cleanup remains an open defect.
