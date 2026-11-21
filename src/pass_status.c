@@ -21,8 +21,11 @@ void pass_status_format(char*out,size_t size,const char*name,uint32_t now,uint32
 }
 
 unsigned pass_status_pages(char pages[2][14],const char*name,uint32_t now,uint32_t aos,uint32_t los,int in_range,int complete){
- (void)los;pages[0][0]=pages[1][0]=0;
- if(in_range)snprintf(pages[0],14,"%s PASS",name);
+ pages[0][0]=pages[1][0]=0;
+ if(in_range){
+  if(!los)snprintf(pages[0],14,"%s --m",name);
+  else{unsigned minutes=los>now?(los-now)/60+((los-now)%60!=0):0;snprintf(pages[0],14,"%s %um",name,minutes);}
+ }
  else if(aos>now)snprintf(pages[0],14,"WAIT %s",name);
  else snprintf(pages[0],14,complete?"NO PASS 24H":"FIND PASSES");
  return 1;

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-volatile uint8_t test_cache[202];
+volatile uint8_t test_cache[202];volatile uint16_t test_rx_elapsed;
 static uint32_t tick;static int tx,mode=7,support=1,notifications,logs,fd,at,pauses;static char logbuf[48];
 void test_dirty(void){notifications++;}
 unsigned display_live_mode(void){return mode;}

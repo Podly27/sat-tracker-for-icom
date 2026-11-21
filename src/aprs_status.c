@@ -3,12 +3,15 @@
 #include <stdint.h>
 #ifndef ISS_HOST_TEST
 #define CACHE ((volatile uint8_t*)0x20393020)
+#define RX_ELAPSED (*(volatile uint16_t*)0x20381324)
 static unsigned lock(void){unsigned c;__asm__ volatile("mrs %0, cpsr\n cpsid i":"=r"(c)::"memory");return c;}
 static void unlock(unsigned c){__asm__ volatile("dmb sy\n msr cpsr_c, %0"::"r"(c):"memory");}
 static void dirty(void){((void(*)(unsigned))0x200b8f14)(0);}
 #else
 extern volatile uint8_t test_cache[202];
 #define CACHE test_cache
+extern volatile uint16_t test_rx_elapsed;
+#define RX_ELAPSED test_rx_elapsed
 static unsigned lock(void){return 0;}
 static void unlock(unsigned c){(void)c;}
 extern void test_dirty(void);
@@ -20,10 +23,15 @@ int aprs_status_supported(Api*a){
 #ifndef ISS_HOST_TEST
  static const uint32_t notification[]={0xe59f1820,0xe0811000,0xe5d12002,0xe3822004};
  static const uint32_t cache_update[]={0xe92d47f0,0xe1a07000,0xe1a06001,0xe1a09002};
+ static const uint32_t hold_setup[]={0xe92d4010,0xe3a02065,0xe0030291,0xe51f21f0};
+ static const uint32_t hold_check[]={0xe1d400b4,0xe3500000,0x0a000004,0xe1d910b0};
  if(!a||a->abi!=3||a->radio!=0x705||a->build!=0x07051405)return 0;
  if((uintptr_t)a->radio_state!=0x2037bac9&&(uintptr_t)a->radio_state!=0x2037bbc1)return 0;
  return !memcmp((const void*)0x200b8f14,notification,sizeof(notification))&&
-  !memcmp((const void*)0x2004a208,cache_update,sizeof(cache_update));
+  !memcmp((const void*)0x2004a208,cache_update,sizeof(cache_update))&&
+  !memcmp((const void*)0x2004b050,hold_setup,sizeof(hold_setup))&&
+  !memcmp((const void*)0x2004b5a4,hold_check,sizeof(hold_check))&&
+  *(const uint32_t*)0x2004ae8c==0x20381324;
 #else
  return a!=0;
 #endif
@@ -34,7 +42,8 @@ int aprs_status_publish(const char*s){
  unsigned c=lock();
  if(active&&CACHE[0x50]){unlock(c);return -2;}
  if(active){for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i]){unlock(c);return -2;}}
- else{
+ int held=active&&CACHE[2]==7&&(CACHE[6]&2)&&(CACHE[4]||CACHE[5]);
+ if(!active){
   for(unsigned i=0;i<20;i++)saved_tail[i]=CACHE[0x3c + i];saved_tail_length=CACHE[0x50];
   for(unsigned i=0;i<13;i++)saved[i]=CACHE[0x2e + i];saved_length=CACHE[0x3b];saved_visible=CACHE[0]&0x20;saved_update=CACHE[0x51]&8;active=1;
  }
@@ -42,7 +51,12 @@ int aprs_status_publish(const char*s){
  /* Native RX text concatenates the 13-byte name and this 20-byte tail.
   * A stale tail would extend SAT pages and trigger the native scroller. */
  for(unsigned i=0;i<20;i++)CACHE[0x3c + i]=' ';CACHE[0x50]=0;
- CACHE[0x3b]=(uint8_t)n;CACHE[0]|=0x20;CACHE[0x51]|=8;unlock(c);dirty();return 0;
+ CACHE[0x3b]=(uint8_t)n;
+ /* In pinned v8 state 7 is the RX name, bit 1 selects its RX variant,
+  * and a nonzero hold precedes scrolling. Renew only that owned hold;
+  * don't enqueue another message lifecycle while the row is held. */
+ if(held)RX_ELAPSED=0;else CACHE[0]|=0x20;
+ CACHE[0x51]|=8;unlock(c);dirty();return 0;
 }
 int aprs_status_end_trace(void (*trace)(unsigned)){
  if(trace)trace(2);
