@@ -28,7 +28,7 @@ void satellite_display_pages(const char*first,const char*second){
  /* Keep the native RX line refreshed between page changes; no blank page. */
  unsigned current=advance?page:(page+count-1)%count;
  if(aprs_status_publish(pages[current])){enabled=0;return;}
- used=1;refresh=now+500;
+ used=1;refresh=now+250;
  if(advance){page=(page+1)%count;scheduled=1;next=now+1500;}
 }
 void satellite_display_text(const char*s){

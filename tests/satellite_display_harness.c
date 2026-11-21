@@ -20,8 +20,8 @@ int main(void){
  Api a={.ticks=ticks,.radio_state=state,.line=line,.sleep=sleep_,.open=open_,.write=write_,.close=close_};
  for(unsigned i=0;i<202;i++)test_cache[i]=(uint8_t)i;
  satellite_display_begin(&a);satellite_display_text("Waiting for GPS");text("WAIT FOR GPS ");assert(notifications==1);
- tick=499;satellite_display_text("Waiting for GPS");assert(notifications==1);
- tick=500;satellite_display_text("Waiting for GPS");assert(notifications==2);text("WAIT FOR GPS ");
+ tick=249;satellite_display_text("Waiting for GPS");assert(notifications==1);
+ tick=250;satellite_display_text("Waiting for GPS");assert(notifications==2);text("WAIT FOR GPS ");
  tick=1000;satellite_display_text("Waiting for GPS");assert(notifications==3);text("WAIT FOR GPS ");
  tick=1500;satellite_display_text("Waiting for GPS");assert(notifications==4);text("WAIT FOR GPS ");
  tick=2000;satellite_display_pages("WAIT SO-131","21.11 15:20Z");assert(notifications==5);text("WAIT SO-131  ");
