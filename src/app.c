@@ -74,10 +74,10 @@ int app_main(Api*a){
    if(!logged){logged=1;civ_trace_save(a);}
   }
   for(unsigned i=0;i<8;i++)show(i,lines[i]);
-  if(captured<0)satellite_display_pages("SAVE FAILED","CHECK SAT APP");
+  if(captured<0)satellite_display_text("SAVE FAILED");
   else if(!captured)satellite_display_text(strstr(bridge,"WAIT CI-V")?"CI-V WAIT":"SAVE RADIO");
-  else if(lines[7][0])satellite_display_pages("TUNING STOP","CHECK SAT APP");
-  else if(switch_wait){char label[14];snprintf(label,14,"%s WAIT",satellites[desired].name);satellite_display_pages(label,"RELEASE PTT");}
+  else if(lines[7][0])satellite_display_text("TUNING STOP");
+  else if(switch_wait){char label[14];snprintf(label,14,"%s WAIT",satellites[desired].name);satellite_display_text(label);}
   else if(planning&&!p->done)satellite_display_text("FIND PASSES");
   else{char pages[2][14];unsigned n=pass_status_pages(pages,p->name,now,p->aos,p->los,q.el>=0,1);satellite_display_pages(pages[0],n>1?pages[1]:0);}
   a->sleep(100);

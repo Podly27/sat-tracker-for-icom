@@ -4,19 +4,17 @@
 #include "tuner.h"
 #include <string.h>
 #include <stdio.h>
-static Api *api;static unsigned enabled,used,page,count,scheduled;static uint32_t next,refresh;
-static char pages[2][14];
-void satellite_display_begin(Api*a){api=a;enabled=aprs_status_supported(a);used=page=count=scheduled=0;memset(pages,0,sizeof(pages));}
+static Api *api;static unsigned enabled,used,scheduled;static uint32_t refresh;
+static char current[14];
+void satellite_display_begin(Api*a){api=a;enabled=aprs_status_supported(a);used=scheduled=0;memset(current,0,sizeof(current));}
+/* Keep the call interface for diagnostics; only the primary message is shown. */
 void satellite_display_pages(const char*first,const char*second){
- if(!enabled)return;
- const char*input[2]={first,second};char incoming[2][14]={{0}};unsigned total=second&&*second?2:1;
- for(unsigned p=0;p<total;p++){
-  if(!input[p]||!*input[p]||strlen(input[p])>13)return;
-  for(unsigned i=0;i<13;i++)incoming[p][i]=i<strlen(input[p])?input[p][i]:' ';
- }
- if(count!=total||memcmp(pages,incoming,sizeof(pages))){memcpy(pages,incoming,sizeof(pages));count=total;page=scheduled=0;}
- uint32_t now=api->ticks();int advance=!scheduled||(int32_t)(now-next)>=0;
- if(!advance&&(int32_t)(now-refresh)<0)return;
+ (void)second;
+ if(!enabled||!first||!*first||strlen(first)>13)return;
+ char incoming[14]={0};unsigned length=strlen(first);
+ for(unsigned i=0;i<13;i++)incoming[i]=i<length?first[i]:' ';
+ if(memcmp(current,incoming,sizeof(current))){memcpy(current,incoming,sizeof(current));scheduled=0;}
+ uint32_t now=api->ticks();if(scheduled&&(int32_t)(now-refresh)<0)return;
  RadioState r;
 #ifdef ISS_HOST_TEST
  extern unsigned display_live_mode(void);
@@ -25,11 +23,8 @@ void satellite_display_pages(const char*first,const char*second){
  unsigned mode=(*(volatile const unsigned char*)0x203e212f)>>4;
 #endif
  if(api->radio_state(&r)||r.tx||mode!=7)return;
- /* Keep the native RX line refreshed between page changes; no blank page. */
- unsigned current=advance?page:(page+count-1)%count;
- if(aprs_status_publish(pages[current])){enabled=0;return;}
- used=1;refresh=now+250;
- if(advance){page=(page+1)%count;scheduled=1;next=now+1500;}
+ if(aprs_status_publish(current)){enabled=0;return;}
+ used=scheduled=1;refresh=now+500;
 }
 void satellite_display_text(const char*s){
  static const char*long_text[]={"Waiting for GPS","Set radio clock to UTC","Switch: wait for radio RX","Finding satellite passes","Release PTT to select satellite","No pass in next 24 hours","Orbit expired / restart SAT","Updating satellite passes"};
