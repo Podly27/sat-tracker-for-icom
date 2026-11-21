@@ -38,3 +38,5 @@ The ARM application builds within the ICAP memory budget. Thirteen host tests pa
 Twenty-seven host test methods pass. Network tests exercise HTTP fragmentation/framing, checksums, duplicate rejection and mocked transport cleanup for success, offline, connect/send/receive failures, cancellation, fallback and timeout. Static audits match the pinned v8/v14 callback tables. The ARM probe builds with 56,420 code bytes and 2,972 BSS bytes inside the loader memory window. No device HTTPS, certificate-authentication or native display integration result is claimed.
 
 A live CelesTrak response (168-byte body) was downloaded on the development computer and accepted by the same C streaming parser with 17-byte fragmentation. This tests server-format compatibility, not the radio socket/TLS implementation.
+
+The native-dialog probe adds a 28th host test method with five scenarios (valid position, missing TLE, expired TLE, no GPS and popup busy). The mock checks seven popup lines, width limits and one-time opening. These tests do not emulate the real native widget or LCD.

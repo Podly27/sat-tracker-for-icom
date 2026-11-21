@@ -5,7 +5,7 @@ import argparse,hashlib,json,os,struct,subprocess,sys,zlib
 from elftools.elf.elffile import ELFFile
 ROOT=Path(__file__).resolve().parents[1]
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--probe',action='store_true',help='Build isolated HTTPS probe without radio-control modules');parser.add_argument('--output',type=Path,default=ROOT/'build');args=parser.parse_args();out=(args.output/('network-probe' if args.probe else '')).resolve();out.mkdir(parents=True,exist_ok=True)
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--display-probe',action='store_true',help='Build isolated native text dialog probe');parser.add_argument('--probe',action='store_true',help='Build isolated HTTPS probe without radio-control modules');parser.add_argument('--output',type=Path,default=ROOT/'build');args=parser.parse_args();assert not(args.probe and args.display_probe),'Select only one probe';out=(args.output/('network-probe' if args.probe else 'display-probe' if args.display_probe else '')).resolve();out.mkdir(parents=True,exist_ok=True)
  cache=ROOT/'.cache';env=os.environ.copy();env.update(ZIG_GLOBAL_CACHE_DIR=str(cache/'zig-global'),ZIG_LOCAL_CACHE_DIR=str(cache/'zig-local'))
  cc=[sys.executable,'-m','ziglang','cc','-target','arm-linux-musleabi','-mcpu=cortex_a9','-marm','-mfloat-abi=softfp','-mfpu=neon']
  flags=['-Oz','-ffunction-sections','-fdata-sections','-fno-stack-protector','-fno-unwind-tables','-fno-asynchronous-unwind-tables','-fno-pic','-fno-builtin','-I'+str(ROOT/'src'),'-I'+str(ROOT/'vendor/sgp4'),'-DISS_SAT_CONTROL=1','-DISS_TX_CONTROL=1']
@@ -14,6 +14,7 @@ def main():
  subprocess.run(cc+flags+[str(bootstrap),'-static','-o',str(out/'toolchain-check.elf')],check=True,env=env)
  sources=['src/app.c','src/orbit.c','src/gps.c','src/civ_queue.c','src/tiny.c','src/sat_control.c','src/tx_control.c','src/radio_session.c','vendor/sgp4/SGP4.c'];objects=[]
  if args.probe:sources=['src/network_probe.c','src/tle_network.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
+ if args.display_probe:sources=['src/display_probe.c','src/gps.c','src/orbit.c','src/tiny.c','vendor/sgp4/SGP4.c']
  for name in sources:
   obj=out/(Path(name).stem+'.o');subprocess.run(cc+flags+['-c',str(ROOT/name),'-o',str(obj)],check=True,env=env);objects.append(str(obj))
  libraries=[]
@@ -32,5 +33,7 @@ def main():
 
   if args.probe:
    header[40:56]=b'TLE HTTPS CHECK\0'.ljust(16,b'\0');app=bytes(header)+image
-  (out/('TLECHECK.app' if args.probe else 'ISS.app')).write_bytes(app);report={'version':'0.17.0-probe' if args.probe else '0.16.0','display_name':'TLE HTTPS CHECK' if args.probe else 'ISS tracker','code_bytes':len(image),'bss_bytes':bss,'stack_bytes':8192,'target':('IC-705 705E140 / SQ6EMM v8 or v14 network probe' if args.probe else 'IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405'),'sha256':hashlib.sha256(app).hexdigest()};(out/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+  if args.display_probe:
+   header[40:56]=b'ISS DISPLAY\0'.ljust(16,b'\0');app=bytes(header)+image
+  (out/('DISPCHK.app' if args.display_probe else 'TLECHECK.app' if args.probe else 'ISS.app')).write_bytes(app);report={'version':'0.17.0-probe' if args.probe or args.display_probe else '0.16.0','display_name':'ISS DISPLAY' if args.display_probe else 'TLE HTTPS CHECK' if args.probe else 'ISS tracker','code_bytes':len(image),'bss_bytes':bss,'stack_bytes':8192,'target':('IC-705 705E140 / SQ6EMM v8 or v14 native text dialog probe' if args.display_probe else 'IC-705 705E140 / SQ6EMM v8 or v14 network probe' if args.probe else 'IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405'),'sha256':hashlib.sha256(app).hexdigest()};(out/'build.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 if __name__=='__main__':main()

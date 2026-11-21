@@ -8,7 +8,8 @@
 | Startup TLE-age check and AOS/LOS search | Implemented locally in 0.16.0; device verification pending |
 | Internet TLE retrieval | Extended v8/v14 socket API identified; separate experimental `TLECHECK.app` built and host-tested; radio verification pending |
 | Tracker radio control on v14 | Not yet supported/validated; v14 probe compatibility does not imply tracker compatibility |
-| SAT status under the main frequency and graphic detail view | APRS native path analysed; dedicated UI bridge still required; not implemented |
+| Native ISS detail popup | Experimental `DISPCHK.app` shows azimuth/elevation and a direction marker in a native text dialog; snapshot only; radio verification pending |
+| SAT status under the main frequency and graphic compass | APRS native path analysed; dedicated UI bridge still required; not implemented |
 
 **Correction:** an earlier development note said v8 exposed no network API. It does: our original header omitted the extended entries. See [network research, test procedure and native display findings](docs/NETWORK-AND-DISPLAY.md).
 
