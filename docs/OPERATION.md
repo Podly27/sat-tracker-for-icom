@@ -16,7 +16,7 @@ The [radio photograph](images/iss-tracker-radio.png) shows an actual ISS pass on
 - **AZ:** direction from true north, clockwise in degrees. **EL:** elevation in degrees; negative values are below the horizon.
 - **km:** slant range to ISS, not ground-track distance.
 - **RX A / TX B:** corrected frequencies. Startup can show computed targets; after controller/readback activity the fields use the app's last confirmed values. They are not an RF counter measurement.
-- **AOS / LOS:** sampled estimates for the next rise or current set, in UTC. The app initially shows search progress.
+- **Waiting / pass status:** `Waiting for ISS DD.MM. HH:MM` gives the next rise in UTC. `ISS pass: N min left` counts down to the estimated end, rounding up to whole minutes. Predictions use 30-second sampling. A new search begins after horizon loss. The app initially shows search progress.
 - **GPS:** a fix is required. When GPS or time/TLE validity is lost, new tuning commands are paused; this does not constitute a hardware transmit inhibit.
 
 Observer coordinates and ACK/debug counters are intentionally hidden in this version. Operational errors can still be shown. The ordinary radio screen continues to say FM; this release does not provide a native SAT mode label or DECODE-area overlay.
@@ -52,3 +52,5 @@ Downloaded elements must pass checksums, NORAD identity, orbit initialization an
 When networking fails, a validated cached orbit within seven days can be used offline. If no usable orbit exists, no radio control starts. UTC changes or an expired cache pause control; restart to perform a new startup download attempt. Online checks run at startup only.
 
 After loading TLE, the app waits for internal GPS and computes the next AOS/LOS before starting its existing radio-control session. STOP during startup cancels before radio settings are captured or changed. The integrated update/save path has host and simulated ARM validation; it still needs a device run. The separate DNS and numeric-IP HTTPS probes have both downloaded and validated a fresh ISS TLE on the owner's IC-705.
+
+Version 0.19.0 displays these statuses inside the Apps window only. FRQTEXT is a separate diagnostic: text visibility is confirmed, but STOP freezes the radio on the owner's device. It is not linked into ISS.app. ISS restoration remains the existing controller path.

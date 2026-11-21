@@ -5,11 +5,11 @@
 | Capability | Status |
 |---|---|
 | Standalone ISS GPS/Doppler tracking and STOP restoration | Existing v8 target; see hardware/software validation notes below |
-| Startup TLE-age check and AOS/LOS search | Integrated in 0.18.0 with HTTPS refresh; device verification pending |
+| Startup TLE-age check and AOS/LOS search | Integrated; owner reports ISS tracking working; see validation limits below |
 | Internet TLE retrieval | Both DNS and numeric-IP probes downloaded fresh ISS TLE on the radio; 0.18.0 integrates startup refresh and recoverable SD storage |
 | Tracker radio control on v14 | Not yet supported/validated; v14 probe compatibility does not imply tracker compatibility |
 | Native ISS detail popup | Native text dialog appeared on the radio; `DISPCHK.app` now reserves space for CLOSE; snapshot only |
-| Text below the main frequency | FRQ test 5 uses the APRS current-mode field rather than stale ICAP mode cache; native display-cache publication/STOP restoration tested in ARM simulation; LCD check pending |
+| Text below the main frequency | FRQ test 5 displays text on hardware, but STOP freezes the radio. Kept experimental and excluded from ISS.app |
 | Live graphical compass / production display integration | Dedicated UI-thread bridge still required; not implemented |
 
 **Correction:** an earlier development note said v8 exposed no network API. It does: our original header omitted the extended entries. See [network research, test procedure and native display findings](docs/NETWORK-AND-DISPLAY.md).
@@ -25,7 +25,7 @@ This repository contains the application and its source. It does **not** contain
 
 - Tracks **ISS only**, using SGP4, validated SD elements and startup HTTPS refresh.
 - Reads a live fix from the IC-705's **internal GPS**; no manually entered location is used.
-- Displays UTC, azimuth, elevation, slant range, the corrected RX/TX frequencies, and the next acquisition or loss of signal (AOS/LOS).
+- Displays UTC, azimuth, elevation, slant range, corrected RX/TX frequencies, and an English waiting/pass countdown status.
 - Configures **VFO A for downlink reception**, **VFO B for uplink transmission**, FM on both VFOs, **67.0 Hz CTCSS** on the uplink, and **SPLIT**.
 - Applies Doppler correction during reception and updates the uplink while the operator transmits.
 - Captures the pre-session VFO settings and restores them after **STOP**, with readback checks.
@@ -52,7 +52,7 @@ Check [ARISS station status](https://www.ariss.org/current-status-of-iss-station
 | UTC / `GPS FIX` | Radio time and a valid internal GPS position. Set the radio clock to UTC. |
 | `AZ`, `EL`, distance | Azimuth clockwise from north, elevation above/below the horizon, and slant range in kilometres. |
 | `RX A`, `TX B`, `SPLIT` | Doppler-corrected frequencies used by the tracker. At startup they can be computed targets; after control/readback they are the last confirmed values. |
-| `AOS` / `LOS` | Estimated beginning of the next visible ISS pass or end of the current pass, in UTC. |
+| Waiting / pass status (0.19.0) | `Waiting for ISS 21.11. 12:48` uses UTC. During a pass, `ISS pass: 7 min left` counts down to estimated LOS, rounding up. The photo shows the older AOS/LOS row. |
 | EXIT footer | Hides the application window; **it does not stop tracking**. |
 
 See [screen and operation details](docs/OPERATION.md). This standalone release does **not** replace the normal `FM` label with `SAT` and does not put information in the native DECODE/scope area.
@@ -175,3 +175,9 @@ Downloaded elements must pass checksums, NORAD identity, orbit initialization an
 When networking fails, a validated cached orbit within seven days can be used offline. If no usable orbit exists, no radio control starts. UTC changes or an expired cache pause control; restart to perform a new startup download attempt. Online checks run at startup only.
 
 After loading TLE, the app waits for internal GPS and computes the next AOS/LOS before starting its existing radio-control session. STOP during startup cancels before radio settings are captured or changed. The integrated update/save path has host and simulated ARM validation; it still needs a device run. The separate DNS and numeric-IP HTTPS probes have both downloaded and validated a fresh ISS TLE on the owner's IC-705.
+
+## Version 0.19.0
+
+The Apps window now shows `Waiting for ISS DD.MM. HH:MM` (UTC) or `ISS pass: N min left`. Remaining minutes are rounded up; predictions still use 30-second horizon sampling. The next search restarts after horizon loss. Startup TLE refresh, Doppler control and original-setting restoration on STOP remain in ISS.app. This version tracks ISS only; CFG satellite selection and overlap priorities are deferred.
+
+Main-screen text is deliberately **not integrated**: the owner confirmed FRQTEXT text visibility but reported a radio freeze on FRQTEXT STOP. ISS STOP and OFF/ON were reported to work. Keep that diagnostic separate until its cleanup is fixed; a simulated restoration is not evidence of safe hardware cleanup.

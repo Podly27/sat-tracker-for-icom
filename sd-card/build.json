@@ -1,9 +1,9 @@
 {
-  "version": "0.18.0",
+  "version": "0.19.0",
   "display_name": "ISS tracker",
-  "code_bytes": 76868,
+  "code_bytes": 77364,
   "bss_bytes": 3640,
   "stack_bytes": 8192,
   "target": "IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405",
-  "sha256": "9d018cb8f72faf4dcb3b29aad629836021d188d596ed3488a104016cf838fd39"
+  "sha256": "2db0629367fbb37a12261e985ed976904d4aebbd9f2934ce1d0211bb93f516bd"
 }

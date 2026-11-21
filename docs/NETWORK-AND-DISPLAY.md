@@ -106,3 +106,7 @@ A separate formatter bug explained blank hexadecimal diagnostics: the minimal fo
 ## Fifth display test: current mode versus ICAP cache
 
 The operator confirms that the normal screen shows FM while test 4 returns cached M:70 with a successful callback R:0 and no publication. Test 5 reads the current normalized mode from `203e212f >> 4`, exactly as the IC-705 E APRS.APP profile does (profile mode group 7 = FM), instead of gating on the ICAP VFO-cache byte. It shows both `C` and `LIVE`; C:70 / LIVE:7 is explicitly allowed. The main tracker already uses canonical CI-V mode readback and is not changed by this display-only fix.
+
+### Latest hardware result: FRQ test 5
+
+Text below the frequency is now confirmed by the owner. STOP freezes the radio only in FRQTEXT, while ISS STOP works. Do not treat the earlier ARM cleanup checks as hardware validation. Version 0.19.0 therefore keeps this backend out of ISS.app and shows its new English pass statuses in the Apps window. Native display cleanup remains an open defect.

@@ -62,3 +62,11 @@ FRQ test 3's compiled ARM code passed main/menu/TX checks with native drawing en
 Thirty-two host test methods pass, including the actual tiny formatter and display-cache ownership/restoration. The final ARM probe ran main-FM, menu-FM, TX and packed-70 cases. The original UI notification executed after cache updates; STOP restored the previous text. TX/non-FM cases published nothing. No CI-V frames or packet-mailbox/pending-flag writes occurred. Observed stack usage was 1,504 bytes. Hardware visibility remains unverified.
 
 FRQ test 5 adds a stale-cache scenario: packed cache 0x70 with current APRS mode group 7 must publish, whereas actual non-FM group 4 and TX must not. Thirty-two host test methods pass with the additional scenario; ARM cases exercise the same distinction. Device text visibility remains pending.
+
+## 0.19.0 pass status and hardware feedback
+
+The owner confirms that ISS tracking works and that FRQTEXT test 5 finally shows main-screen text. However, STOP in FRQTEXT freezes the radio; power-off still works. The owner explicitly identifies FRQTEXT only, not ISS. Earlier simulated display cleanup did not expose this hardware failure. The native cache backend remains excluded from the main tracker.
+
+Thirty-seven host test methods pass. New tests use the actual tiny formatter and cover UTC day/month/year rollover, leap day, rounded-up remaining minutes, expired AOS and no-pass/search states. The ARM build uses 77,364 code bytes plus 3,640 BSS bytes (81,004 total, within the 81,920-byte loader budget), with an 8,192-byte stack. Radio-control/restoration source is unchanged. These new display states still need an on-radio check.
+
+The compiled 0.19.0 ARM startup also passed fresh-cache and stale-cache refresh scenarios with mocked network/SD callbacks: respectively zero and one HTTPS connections, alternate-slot storage preserved the original cache, and STOP during the initial search returned with no CI-V commands. Observed stack use was 5,240 bytes. This does not validate the real network/SD driver or the new pass-status LCD layout.

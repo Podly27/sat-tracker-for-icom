@@ -2,6 +2,7 @@
 #include "orbit.h"
 #include "gps.h"
 #include "tle_store.h"
+#include "pass_status.h"
 #include "civ_queue.h"
 #include "tuner.h"
 #ifdef ISS_RX_CONTROL
@@ -17,6 +18,7 @@
 #include <math.h>
 #define APP_DISPLAY "ISS tracker"
 #define APP_TLE "ISS.TLE"
+#define SAT_NAME "ISS"
 static Api *api;static Orbit orbit;static Tuner tuner;static char linebuf[8][32];
 static const char *bridge="CIV PROBE NOT RUN";
 static const char *control(Api *a,uint32_t down,uint32_t up,int gps,int valid){
@@ -97,6 +99,9 @@ int app_main(Api *a){
   }
   Look q;if(orbit_look(&orbit,now,lat,lon,alt,&q)){bridge=control(a,0,0,1,0);status("Orbit calculation failed");a->sleep(1000);continue;}
   bridge=control(a,q.down_hz,q.up_hz,1,1);
+  /* Start the next search on actual horizon loss, including the interval
+   * before the sampled LOS. Never show a past AOS as the next pass. */
+  if(q.el<0&&aos&&aos<=now)pass_reset(now);
   pass_work();
   snprintf(linebuf[0],32,"ISS / FM REPEATER  %s",q.el>=0?"IN RANGE":"BELOW");
   snprintf(linebuf[1],32,"%02u:%02u:%02u UTC  %s",c.hour,c.minute,c.second,"GPS FIX");
@@ -114,10 +119,7 @@ int app_main(Api *a){
 #else
   freq(f,q.up_hz);snprintf(linebuf[4],32,"UP %s T67.0",f);
 #endif
-  if(q.el>=0&&!los)snprintf(linebuf[5],32,"Finding end of pass...");
-  else if(aos)snprintf(linebuf[5],32,"%s %02lu:%02lu:%02lu UTC",q.el>=0?"LOS":"AOS",(unsigned long)(((q.el>=0?los:aos)/3600)%24),(unsigned long)(((q.el>=0?los:aos)/60)%60),(unsigned long)((q.el>=0?los:aos)%60));
-  else if(nextscan>scanend)snprintf(linebuf[5],32,"No pass in next 24 hours");
-  else snprintf(linebuf[5],32,"Finding next pass... %lu%%",(unsigned long)(scanned*100/2881));
+  pass_status_format(linebuf[5],sizeof(linebuf[5]),SAT_NAME,now,aos,los,q.el>=0,nextscan>scanend);
   linebuf[6][0]=linebuf[7][0]=0;
   /* Keep operational errors visible, without coordinates or ACK diagnostics. */
   if(strstr(bridge,"STOP:")||strstr(bridge,"ERROR")||strstr(bridge,"SAVE:"))snprintf(linebuf[7],32,"%s",bridge);
