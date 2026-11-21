@@ -1,6 +1,7 @@
 #include "aprs_status.h"
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 #ifndef ISS_HOST_TEST
 #define CACHE ((volatile uint8_t*)0x20393020)
 #define RX_ELAPSED (*(volatile uint16_t*)0x20381324)
@@ -86,4 +87,27 @@ int aprs_status_release(void){
  for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
  if(owned)for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=' ';
  active=0;unlock(c);return owned?0:-2;
+}
+
+/* Observe the real main-screen state without changing its scroll counters.
+ * Keep the last main-screen sample visible when Apps is opened. */
+const char *aprs_status_debug(unsigned row){
+ static char info[2][32];static unsigned peak;
+#ifndef ISS_HOST_TEST
+ unsigned foreground=*(volatile uint8_t*)0x204b035d;
+ volatile uint8_t *scroll=(volatile uint8_t*)0x203930fa;
+ unsigned offset=*(volatile uint8_t*)0x204bac93,length=*(volatile uint8_t*)0x204c0371;
+#else
+ extern volatile uint8_t test_ui_foreground,test_scroll[6],test_rx_offset,test_rx_length;
+ unsigned foreground=test_ui_foreground;volatile uint8_t *scroll=test_scroll;
+ unsigned offset=test_rx_offset,length=test_rx_length;
+#endif
+ if(!row&&foreground==0){
+  unsigned c=lock();unsigned state=CACHE[2],style=CACHE[3],hold=CACHE[4]|(CACHE[5]<<8),elapsed=RX_ELAPSED,q=CACHE[0];
+  unsigned flags=scroll[0],index=scroll[1],other=scroll[5];unlock(c);
+  if(index>peak)peak=index;
+  snprintf(info[0],32,"N%u/%u H%u E%u Q%02X",state,style,hold,elapsed,q);
+  snprintf(info[1],32,"S%02X/%u P%u B%u O%u L%u",flags,index,peak,other,offset,length);
+ }
+ return info[row?1:0][0]?info[row?1:0]:"UI: hide app for 10 seconds";
 }

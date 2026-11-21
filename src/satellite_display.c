@@ -4,9 +4,9 @@
 #include "tuner.h"
 #include <string.h>
 #include <stdio.h>
-static Api *api;static unsigned enabled,used,scheduled;static uint32_t refresh;
+static Api *api;static unsigned enabled,used,scheduled,bound;static uint32_t refresh;
 static char current[14];
-void satellite_display_begin(Api*a){api=a;enabled=aprs_status_supported(a);used=scheduled=0;memset(current,0,sizeof(current));}
+void satellite_display_begin(Api*a){api=a;bound=enabled=aprs_status_supported(a);used=scheduled=0;memset(current,0,sizeof(current));}
 /* Keep the call interface for diagnostics; only the primary message is shown. */
 void satellite_display_pages(const char*first,const char*second){
  (void)second;
@@ -39,3 +39,5 @@ void satellite_display_end(void){
   * screen repaints when the loader returns to it. */
  aprs_status_release();used=0;
 }
+
+const char *satellite_display_debug(unsigned row){return bound?aprs_status_debug(row):"UI diagnostics unavailable";}

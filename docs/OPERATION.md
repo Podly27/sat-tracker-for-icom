@@ -37,3 +37,9 @@ STOP phases are `Drain radio commands`, `Release status text`, and `Restore radi
 Multi-satellite changes in 0.23 have software/ARM validation and still require on-radio verification. The [earlier photograph](images/iss-tracker-radio.png) shows an older single-ISS build, not the current UI.
 
 Version 0.25 is a diagnostic candidate for the reported first-start busy condition. If capture fails, it stores read-only transport snapshots in `SATDBG.LOG` and shows the SAVE phase. Return the card after STOP/power-off for inspection. See [CI-V diagnostics](CI-V-DEBUG.md). It does not clear an unknown busy path.
+
+## UI diagnostic build 0.31
+
+Automatic scrolling still occurs on the owner's radio with 0.30; disabling it is not yet verified. Build 0.31 temporarily replaces the last two normal Apps rows (tone/priority and blank status) with read-only native UI diagnostics when no radio error is present. Radio errors take precedence. It does not change scrolling behavior relative to 0.30 or write extra SD logs.
+
+Hide SAT with EXIT, leave the normal FM/RX screen visible for at least ten seconds while the unwanted motion happens, then reopen the running SAT app and photograph both bottom diagnostic rows. They retain the latest sample from the main screen. `N` is native state/style, `H` its hold duration, `E` its elapsed counter and `Q` its pending-event flags. `S` is native scroll-group 4 flags/index, `P` its peak sampled index, `B` group 5 index, `O` the rendered output offset and `L` the native output-length byte. These raw values are observations, not a diagnosis. Normal tracking/STOP remain available.

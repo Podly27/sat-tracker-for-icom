@@ -1,7 +1,7 @@
 #include "aprs_status.h"
 #include <assert.h>
 #include <string.h>
-volatile uint8_t test_cache[202];volatile uint16_t test_rx_elapsed;static unsigned notifications;
+volatile uint8_t test_cache[202];volatile uint16_t test_rx_elapsed;volatile uint8_t test_ui_foreground,test_scroll[6],test_rx_offset,test_rx_length;static unsigned notifications;
 static unsigned stage;
 static void trace(unsigned n){assert(n==++stage+1);if(n==3)assert(notifications==2);if(n==4)assert(notifications==3);}
 void test_dirty(void){notifications++;}
@@ -42,4 +42,11 @@ int main(void){Api a={0};assert(aprs_status_supported(&a));
  assert(!aprs_status_publish("ISS 4m       "));assert(test_rx_elapsed==321);assert(!aprs_status_release());
  assert(!aprs_status_publish("WAIT ISS     "));test_cache[2]=7;test_cache[6]=2;test_cache[0x2e]='X';test_rx_elapsed=222;
  assert(aprs_status_publish("ISS 3m       ")==-2);assert(test_rx_elapsed==222);assert(aprs_status_release()==-2);
+ test_cache[2]=7;test_cache[3]=2;test_cache[4]=0xf4;test_cache[5]=1;test_cache[0]=0;test_rx_elapsed=123;
+ test_scroll[0]=1;test_scroll[1]=3;test_scroll[5]=2;test_rx_offset=2;test_rx_length=13;test_ui_foreground=0;
+ assert(!strcmp(aprs_status_debug(0),"N7/2 H500 E123 Q00"));assert(!strcmp(aprs_status_debug(1),"S01/3 P3 B2 O2 L13"));
+ test_ui_foreground=0x33;test_scroll[1]=0;test_rx_elapsed=456;
+ assert(!strcmp(aprs_status_debug(0),"N7/2 H500 E123 Q00"));assert(!strcmp(aprs_status_debug(1),"S01/3 P3 B2 O2 L13"));
+ assert(test_rx_elapsed==456&&test_scroll[1]==0);test_ui_foreground=0;
+ assert(!strcmp(aprs_status_debug(0),"N7/2 H500 E456 Q00"));assert(!strcmp(aprs_status_debug(1),"S01/0 P3 B2 O2 L13"));
  return 0;}

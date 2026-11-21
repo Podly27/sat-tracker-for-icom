@@ -39,3 +39,5 @@ int radio_session_restore(Api*a){(void)a;assert(display_closed);restores++;retur
 int main(int argc,char**argv){assert(argc==2);if(!strcmp(argv[1],"cancel"))limit=1;missing=!strcmp(argv[1],"missing");fix=strcmp(argv[1],"no-fix")!=0;expired=!strcmp(argv[1],"expired");
  Api a={.abi=3,.radio=0x705,.build=0x07051405,.size=0x54,.line=line,.clear=clear_screen,.open=open_,.read=read_,.close=close_,.sleep=sleep_ms,.ticks=ticks,.radio_state=state,.stop=stopped,.clock=clock_read};app_main(&a);
  if(missing||!fix||expired||limit==1){assert(!commands&&!restores);}else{assert(commands&&restores==1&&profiles==1);}return 0;}
+
+const char *satellite_display_debug(unsigned row){(void)row;return "UI diagnostics";}
