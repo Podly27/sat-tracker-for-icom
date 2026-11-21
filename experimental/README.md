@@ -22,18 +22,20 @@ The popup is a **snapshot with a text direction marker, not a live graphical com
 
 Build: `python3 tools/build.py --display-probe`.
 
-## 4. FRQTEXT.app — text below the main frequency (test 3)
+## 4. FRQTEXT.app — APRS-derived receiver-status text (test 4)
 
-Reads GPS/TLE and attempts to paint `ISS AZ… EL… IN RANGE/BELOW` at native coordinates x=12, y=96. Start in FM, use EXIT until the ordinary frequency screen is visible and look below the frequency. Drawing is suppressed in menus/Apps, other modes and TX. Use Apps STOP when finished; the app requests a native redraw on exit.
+Uses the final receiver-status display cache used after APRS/native header processing. It publishes a compact `ISS A105 E+13` status and invokes the original UI notification. It does not write the RX packet mailbox or pending-receive flag and does not call the receive-history/packet-processing path. Rendering is left to the normal UI task, including when a menu is currently open.
 
-This uses original native drawing routines directly, not invented APRS receive packets. It does not patch firmware code or install rendering hooks. **This app-task drawing path is experimental:** the native renderer may overwrite it or produce flicker. A proper UI-thread bridge is still required for production integration. Native GPU scheduling, LCD placement and complete redraw after STOP need device verification.
+Set the ordinary radio mode to **FM** first, then start the app and use EXIT to view the frequency screen. The packed mode diagnostic must read `M:A0` for the FM gate to pass; TX suppresses publication. The `PUB` counter counts cache updates, not confirmed LCD frames. `FG/M/TX/R` and observed UI codes are now formatted correctly. Use Apps STOP to restore the original cache if it is still owned; foreign updates are preserved.
 
-Build: `python3 tools/build.py --frq-probe`. The IC-705 E v8/v14 UI callback and drawing signatures must match; other bindings are refused. These UI-only bindings do not make the main tracker v14-compatible.
+Earlier diagnostics used unsupported `%X` in the tiny formatter, omitted those fields and shifted later arguments. Consequently the photographed `R:112` was not a reliable callback return code; the shifted value was consistent with packed mode `0x70`, which the FM-only test rejects. Test 4 includes actual formatter regression tests.
+
+This is an experimental UI cache probe, not a confirmed production SAT overlay or a graphic compass. Native signatures are pinned for IC-705 E v8/v14 UI bindings; the main tracker's RF-control target remains v8. No tuning/PTT, firmware/code patches or SD writes occur in this probe.
+
+Build: `python3 tools/build.py --frq-probe`.
 
 ## Card contents
 
 The Apps scanner has an eight-file limit and macOS `._*.app` metadata can consume entries. For this test round, keep only the four named test apps in Apps. Preserve other apps in a backup directory outside Apps, retain CFG/TLE and matching firmware support BIN files, and move macOS app sidecars outside Apps before ejecting the card.
-
-Test 3 uses normal-radio surface 12 instead of the Apps surface. It adds rows `FG/M/TX/R`, `DRAW/MAIN/ELSE`, observed UI codes and last draw state. Inspect these by returning to the Apps window after using EXIT to check the main frequency screen. A computed position alone does not prove a visible GPU render. The first test was reported to calculate position but show no main-screen text.
 
 The integrated `sd-card/IC-705/Apps/ISS.app` is now version 0.18.0 and **does configure/tune the radio** after valid TLE, GPS and pass search. It is distinct from these read-only/control-free probes. Its network and SD-write startup integration still needs device verification.

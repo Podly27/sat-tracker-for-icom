@@ -1,9 +1,9 @@
 {
   "version": "0.17.0-probe",
   "display_name": "FRQ TEXT TEST",
-  "code_bytes": 53304,
-  "bss_bytes": 2076,
+  "code_bytes": 54496,
+  "bss_bytes": 2108,
   "stack_bytes": 8192,
-  "target": "IC-705 705E140 / SQ6EMM v8/v14 native surface-12 drawing probe",
-  "sha256": "c90ad902363938a837912b5a86a02e29c245fc8b8cf9438fe4d9696f37d1dfe6"
+  "target": "IC-705 705E140 / SQ6EMM v8/v14 APRS display-cache probe",
+  "sha256": "a29ab470e1fdf03f07a24fa8d53a85f6a3b4d30aca4910049b27ca3ad4c3df5e"
 }

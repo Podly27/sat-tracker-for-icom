@@ -1,5 +1,12 @@
 # Changelog
 
+## FRQ diagnostic test 4 — 2026-11-21
+
+- Use the APRS-derived final receiver-status display cache with native UI notification, not direct GPU painting or receive-packet injection.
+- Restore owned display state on STOP and preserve foreign updates.
+- Fix missing x/X support in the tiny formatter and test the actual implementation; old R:112 diagnostics were shifted arguments.
+- FM/RX-only publication; real-radio LCD validation pending. Main ISS startup refresh/control behavior is unchanged.
+
 ## 0.18.0 — 2026-11-21
 
 - Integrate startup HTTPS refresh for missing or >24-hour TLE, then GPS and pass search before radio control.

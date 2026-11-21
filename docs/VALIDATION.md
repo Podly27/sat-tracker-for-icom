@@ -56,3 +56,7 @@ Thirty public host test methods pass. New store tests cover fresh/stale/missing/
 The compiled 0.18 ARM startup ran with native v8 GPS helpers and simulated TLS/SD/ICAP callbacks. A fresh-cache run made no connection; a stale-cache run fetched, validated and wrote the alternate slot, closed the network handle and preserved the original file. STOP before pass-search completion returned without CI-V or radio-state writes. Observed stack usage was 5,240 bytes within the 8,192-byte allocation. No real SD controller/TLS peer verification was exercised. The integrated on-radio refresh and file write remain pending.
 
 FRQ test 3's compiled ARM code passed main/menu/TX checks with native drawing entry points intercepted: it targets layer 12 and passes x=12/y=96; no CI-V occurs. The UI diagnostic counters are new. Actual rendering/scheduling on the LCD remains pending.
+
+## FRQ test 4
+
+Thirty-two host test methods pass, including the actual tiny formatter and display-cache ownership/restoration. The final ARM probe ran main-FM, menu-FM, TX and packed-70 cases. The original UI notification executed after cache updates; STOP restored the previous text. TX/non-FM cases published nothing. No CI-V frames or packet-mailbox/pending-flag writes occurred. Observed stack usage was 1,504 bytes. Hardware visibility remains unverified.
