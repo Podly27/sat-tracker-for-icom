@@ -12,7 +12,7 @@ static void sleep_ms(unsigned n){elapsed+=n;sleeps++;}
 static int stopped(void){return sleeps>=limit;}
 static uint32_t ticks(void){return elapsed;}
 static int clock_read(RadioClock*c){*c=(RadioClock){2026,11,20,12,0,0,5};return 0;}
-static int open_file(const char*n,unsigned flags){assert(!strcmp(n,"satellites.TLE")&&!flags);return missing?-1:1;}
+static int open_file(const char*n,unsigned flags){assert(!strcmp(n,"SAT.TLE")&&!flags);return missing?-1:1;}
 static int read_file(int h,void*b,int cap){(void)h;(void)cap;strcpy(b,"1 mock\n2 mock\n");return 14;}
 static int close_file(int h){(void)h;return 0;}
 static int state(void*p){(void)p;return 0;}

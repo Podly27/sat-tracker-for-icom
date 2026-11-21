@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 static char files[3][512];static int exists[3],fd_slot=-1,fd_write,position,stop_flag,sleeps,fetches,writes,offline,fetch_error,download_bad,write_error,read_corrupt,stop_download,stop_save,old_download;
-static const char *names[]={"satellites.TLE","satellites.BAK","unused"};
+static const char *names[]={"SAT.TLE","SAT.BAK","unused"};
 static const char *old="ISS\n1 OLD\n2 ok\n",*fresh="ISS\n1 FRESH\n2 ok\n";
 static void line(unsigned n,const char*s){assert(n<8&&strlen(s)<=31);}
 static void clear(void){}

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-static const char *files[]={"satellites.TLE","satellites.BAK"};
+static const char *files[]={"SAT.TLE","SAT.BAK"};
 static int read_text(Api*a,const char*name,char*buf,unsigned size){
  int fd=a->open(name,0);if(fd<0)return -1;unsigned used=0;int n=0;
  while(used<size-1){
@@ -50,7 +50,7 @@ static int radio_now(Api*a,uint32_t*now){
  *now=utc_seconds(c.year,c.month,c.day,c.hour,c.minute,c.second);return 0;
 }
 int tle_startup(Api*a,Orbit*out){
- a->clear();a->line(0,"satellites / STARTUP 0.20");a->line(1,"Checking TLE epoch / UTC");
+ a->clear();a->line(0,"SAT / STARTUP 0.21");a->line(1,"Checking TLE epoch / UTC");
  uint32_t now=0;while(!a->stop()&&radio_now(a,&now)){a->line(3,"Set radio clock to UTC");a->sleep(250);}
  if(a->stop())return -2;
  unsigned slot;int valid=tle_store_load(a,now,out,&slot)==0;

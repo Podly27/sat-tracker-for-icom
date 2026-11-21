@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#define APP_DISPLAY "satellites"
-#define APP_TLE "satellites.TLE"
+#define APP_DISPLAY "SAT"
+#define APP_TLE "SAT.TLE"
 #define SAT_NAME "ISS"
 static Api *api;static Orbit orbit;static Tuner tuner;static char linebuf[8][32];
 static const char *bridge="CIV PROBE NOT RUN";
@@ -90,7 +90,7 @@ int app_main(Api *a){
   lat=pos.lat;lon=pos.lon;alt=0;
   if(!prev||now<prev||now-prev>5||fabs(oldlat-lat)>0.02||fabs(oldlon-lon)>0.02||(los&&now>los))pass_reset(now);
   oldlat=lat;oldlon=lon;prev=now;
-  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status("TLE expired (>7 days)");show(4,"Restart to check for new TLE");show(5,"Update satellites.TLE on SD");a->sleep(1000);continue;}
+  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status("TLE expired (>7 days)");show(4,"Restart to check for new TLE");show(5,"Update SAT.TLE on SD");a->sleep(1000);continue;}
   if(!startup_ready){
    pass_work();
    status("Finding next ISS pass");
@@ -138,10 +138,10 @@ int app_main(Api *a){
  a->clear();show(0,APP_DISPLAY " / STOP");
  uint32_t restore_start=a->ticks();int restored;
  while((restored=radio_session_restore(a))==0&&a->ticks()-restore_start<30000){
-  show(3,radio_session_status());a->sleep(50);
+  show(3,radio_session_status());a->sleep(10);
  }
  show(3,restored==1?"Original settings restored":radio_session_status());
- if(restored!=1){show(5,"Restore incomplete - check TRX");a->sleep(3000);}
+ if(restored!=1)show(5,"Restore incomplete - check TRX");
 #elif defined(ISS_RX_CONTROL)
  rx_control_finish(a);
 #elif !defined(ISS_MONITOR)

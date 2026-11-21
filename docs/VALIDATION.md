@@ -11,7 +11,7 @@ The operator reported:
 - Software-confirmed uplink corrections during operator-controlled TX.
 - Successful return of original settings after STOP in the predecessor standalone build.
 
-Version 0.15.0 is the rename to `satellites.app` / `satellites.CFG` / `satellites.TLE` and the displayed name `ISS tracker`. Its four controller/session object files were byte-identical to the preceding build when checked locally. That is useful regression evidence, but does not turn it into an independently hardware-tested release. The renamed files still need device confirmation.
+Version 0.15.0 is the rename to `SAT.app` / `SAT.CFG` / `SAT.TLE` and the displayed name `ISS tracker`. Its four controller/session object files were byte-identical to the preceding build when checked locally. That is useful regression evidence, but does not turn it into an independently hardware-tested release. The renamed files still need device confirmation.
 
 No independent spectrum/frequency-counter measurement of active-TX Doppler was performed by the development agent. Radio/CI-V readback and a transaction counter do not establish RF accuracy.
 
@@ -76,3 +76,11 @@ The compiled 0.19.0 ARM startup also passed fresh-cache and stale-cache refresh 
 The owner reports FRQTEXT test 6 no longer freezes on STOP. This does not establish the original cause, nor independently validate the combined app. The integration retains file-close checkpoints and 750 ms pacing during display cleanup, with CI-V control finished before display teardown and radio restoration after it.
 
 Thirty-eight host methods pass, including actual cache publication/restoration, scrolling, FM/TX gating, partial log writes, closed checkpoints, no-op cleanup before publication, and STOP ordering. Native binding and hardware-driver behavior remain outside those host tests. The compiled ARM fresh/stale startup tests use the renamed cache paths and pass with 6,640 bytes observed stack use within 8,192 allocated. HTTPS/SD are mocked in that check. The startup HTTP parser moved from persistent BSS to startup stack to fit the fixed loader memory budget; no target memory limit was increased.
+
+## 0.21.0 loader deadline fix
+
+Pinned v8 loader inspection: the ordinary STOP watchdog at 0x2037e138–0x2037e15c compares elapsed native ticks with 0x0bb8 (3,000), then terminates the app and sets status 6. Its native-I/O-busy field suppresses this check while a wrapped call is active. This explains why 0.20.0's six intentional 750 ms pauses exceeded the grace period irrespective of radio-command latency. It does not prove a separate deadlock never existed.
+
+Thirty-eight host test methods pass. The display integration test now requires zero sleeps, zero SD log operations, preserved FM/TX gating and restored owned cache. Main STOP still ends radio control before display teardown and verifies radio restoration afterward; its poll interval is 10 ms. Combined hardware verification remains pending.
+
+The actual compiled 0.21.0 ARM controller/session code was also exercised with native v8 display-cache notification, mocked GPS/orbit/SD and simulated CI-V ACK/readback. Two cases began on VFO A with SPLIT off and VFO B with SPLIT on. Both returned normally 310 ms after STOP and restored original A/B frequencies, modes, selection, SPLIT and text cache; observed stack use was 6,640/8,192 bytes. This is simulated response timing, not a measured hardware shutdown time.

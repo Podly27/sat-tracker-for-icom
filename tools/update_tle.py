@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch or extract real ISS orbital elements and atomically save satellites.TLE.
+"""Fetch or extract real ISS orbital elements and atomically save SAT.TLE.
 Never modifies the radio, keys PTT or fabricates orbital elements.
 """
 import argparse,calendar,datetime as dt,math,os,re,sys,tempfile,urllib.request
@@ -35,13 +35,13 @@ def extract(text,now=None,max_age_hours=168):
 def save_atomic(path,text):
  path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);temp=None
  try:
-  with tempfile.NamedTemporaryFile('w',encoding='ascii',newline='\n',dir=path.parent,prefix='.satellites-TLE-',suffix='.tmp',delete=False)as f:
+  with tempfile.NamedTemporaryFile('w',encoding='ascii',newline='\n',dir=path.parent,prefix='.SAT-TLE-',suffix='.tmp',delete=False)as f:
    temp=Path(f.name);f.write(text);f.flush();os.fsync(f.fileno())
   os.replace(temp,path)
  finally:
   if temp and temp.exists():temp.unlink()
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--input',type=Path,help='Extract ISS from an already downloaded text TLE list instead of using the network');parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parents[1]/'sd-card/IC-705/Apps/satellites.TLE');parser.add_argument('--max-age-hours',type=float,default=168);args=parser.parse_args()
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--input',type=Path,help='Extract ISS from an already downloaded text TLE list instead of using the network');parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parents[1]/'sd-card/IC-705/Apps/SAT.TLE');parser.add_argument('--max-age-hours',type=float,default=168);args=parser.parse_args()
  if not math.isfinite(args.max_age_hours)or args.max_age_hours<=0:parser.error('--max-age-hours must be positive and finite')
  try:
   if args.input:result=extract(args.input.read_text(encoding='ascii'),max_age_hours=args.max_age_hours);source=str(args.input)
@@ -49,7 +49,7 @@ def main():
    result=None;errors=[]
    for name,url in SOURCES:
     try:
-     req=urllib.request.Request(url,headers={'User-Agent':'satellites-for-IC-705/0.20.0 (manual TLE update)'})
+     req=urllib.request.Request(url,headers={'User-Agent':'SAT-for-IC-705/0.21.0 (manual TLE update)'})
      with urllib.request.urlopen(req,timeout=20)as f:raw=f.read(2_000_001)
      if len(raw)>2_000_000:raise TLEError('TLE response too large')
      result=extract(raw.decode('ascii'),max_age_hours=args.max_age_hours);source=name;break
