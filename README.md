@@ -1,5 +1,7 @@
 # SAT for IC-705
 
+**Hardware issue under investigation:** the owner reports a radio freeze on STOP in 0.21.0. Version 0.22.0 changes native text cleanup and adds visible STOP phases; hardware confirmation is pending.
+
 ## Current development status — 2026-11-21
 
 | Capability | Status |
@@ -195,3 +197,9 @@ The owner reports FRQTEXT test 6 no longer freezes on STOP. The cause is not est
 Use `SAT.app`, displayed as `SAT`, with `SAT.CFG` (reserved), `SAT.TLE` and automatically managed `SAT.BAK`. This short name fits the radio's older filename listing. Old tracker executables and companion files are archived outside Apps during migration. The tracker still follows ISS only.
 
 The owner reported `App killed (no stop)` with 0.20.0. Inspection of the pinned v8 loader shows a 3,000 ms STOP grace period; the six 750 ms diagnostic delays alone required 4,500 ms. Version 0.21.0 removes display-cleanup delays and SD log I/O, retains ownership-checked text-cache restoration and native redraw, and polls original radio-setting restoration every 10 ms instead of 50 ms. It also removes a three-second wait after restoration failure. Display cleanup no longer generates a LOG file. Wait for the app to exit and confirm original radio settings. Unresponsive CI-V or a held PTT can still prevent a successful restore; no forced queue reset or firmware timeout change is made.
+
+## Version 0.22.0 — STOP diagnostic candidate
+
+A device report confirms that removing debug delays alone did not resolve the full-radio freeze. The known STOP timeout and a possible display-cleanup failure must be treated separately. This candidate does not call native UI notification/forced redraw while stopping and does not restore saved display visibility/update flags. It blanks its own 13-character status only if the characters and length still belong to the app, preserving newer native receiver content. It then lets the loader/radio handle repaint. Radio-setting restoration uses the earlier 50 ms polling interval.
+
+Visible STOP phases are `1 Drain radio commands`, `2 Release status text`, and `3 Restore radio settings`, followed by `STOP complete`. No diagnostic log or artificial pause is introduced. These indicate the last reached step, not a proven cause. The normal radio-setting snapshot/readback restoration remains.

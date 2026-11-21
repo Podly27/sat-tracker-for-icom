@@ -84,3 +84,11 @@ Pinned v8 loader inspection: the ordinary STOP watchdog at 0x2037e138–0x2037e1
 Thirty-eight host test methods pass. The display integration test now requires zero sleeps, zero SD log operations, preserved FM/TX gating and restored owned cache. Main STOP still ends radio control before display teardown and verifies radio restoration afterward; its poll interval is 10 ms. Combined hardware verification remains pending.
 
 The actual compiled 0.21.0 ARM controller/session code was also exercised with native v8 display-cache notification, mocked GPS/orbit/SD and simulated CI-V ACK/readback. Two cases began on VFO A with SPLIT off and VFO B with SPLIT on. Both returned normally 310 ms after STOP and restored original A/B frequencies, modes, selection, SPLIT and text cache; observed stack use was 6,640/8,192 bytes. This is simulated response timing, not a measured hardware shutdown time.
+
+## 0.22.0 STOP investigation
+
+The owner reports a full-radio freeze on STOP with 0.21.0. The earlier 310 ms simulation therefore did not establish a hardware fix. The FRQ debug build may have avoided the critical cleanup because its intentional waits triggered force termination. The root cause remains unconfirmed.
+
+This candidate removes native UI notifications, forced redraw writes and replay of saved visibility/update flags from STOP. It clears owned characters only and retains the normal 50 ms radio-restore poll interval. Host tests cover no native notification/log/sleep during display teardown and preserve all fields other than owned characters, including native content after ownership changes. Thirty-eight methods pass.
+
+Compiled ARM tests execute actual display publication and radio-control/session code with private v8 firmware, mocked orbit/SD/clock and CI-V responses. Two A/B and SPLIT configurations each restored original frequencies, modes, selection and SPLIT, blanked owned text, and returned 1,550 simulated ms after STOP. Each run executed 11 native notifications while running and asserted zero native notifications after STOP. Observed stack use was 6,640/8,192 bytes. These checks cannot reproduce real UI scheduling, native rendering or hardware deadlocks. On-radio confirmation is required.

@@ -50,7 +50,7 @@ static int radio_now(Api*a,uint32_t*now){
  *now=utc_seconds(c.year,c.month,c.day,c.hour,c.minute,c.second);return 0;
 }
 int tle_startup(Api*a,Orbit*out){
- a->clear();a->line(0,"SAT / STARTUP 0.21");a->line(1,"Checking TLE epoch / UTC");
+ a->clear();a->line(0,"SAT / STARTUP 0.22");a->line(1,"Checking TLE epoch / UTC");
  uint32_t now=0;while(!a->stop()&&radio_now(a,&now)){a->line(3,"Set radio clock to UTC");a->sleep(250);}
  if(a->stop())return -2;
  unsigned slot;int valid=tle_store_load(a,now,out,&slot)==0;

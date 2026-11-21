@@ -26,9 +26,8 @@ void satellite_display_text(const char*s){
  if(n>13)offset=(offset+1)%(n+3);
 }
 void satellite_display_end(void){
- if(!used)return;aprs_status_end();
-#ifndef ISS_HOST_TEST
- *(volatile uint16_t*)0x20380698|=1;*(volatile uint8_t*)0x203806f7|=0x40;
-#endif
- used=0;
+ if(!used)return;
+ /* No native UI calls or forced redraw during Apps STOP. The normal radio
+  * screen repaints when the loader returns to it. */
+ aprs_status_release();used=0;
 }

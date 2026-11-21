@@ -129,17 +129,21 @@ int app_main(Api *a){
   satellite_display_text(linebuf[5]);
   a->sleep(100);
  }
+ a->clear();show(0,APP_DISPLAY " / STOP");
+ show(2,"1 Drain radio commands");
 #ifdef ISS_SAT_CONTROL
  if(startup_ready)sat_control_finish(a);
 #endif
+ show(2,"2 Release status text");
  satellite_display_end();
 #ifdef ISS_SAT_CONTROL
  if(!startup_ready)return 0;
- a->clear();show(0,APP_DISPLAY " / STOP");
+ show(2,"3 Restore radio settings");
  uint32_t restore_start=a->ticks();int restored;
  while((restored=radio_session_restore(a))==0&&a->ticks()-restore_start<30000){
-  show(3,radio_session_status());a->sleep(10);
+  show(3,radio_session_status());a->sleep(50);
  }
+ show(2,restored==1?"STOP complete":"STOP: restore incomplete");
  show(3,restored==1?"Original settings restored":radio_session_status());
  if(restored!=1)show(5,"Restore incomplete - check TRX");
 #elif defined(ISS_RX_CONTROL)

@@ -13,4 +13,14 @@ int main(void){Api a={0};assert(aprs_status_supported(&a));
  assert(!aprs_status_publish("ISS A110 E+15"));assert(!aprs_status_end_trace(trace));assert(stage==3);
  for(unsigned i=0;i<202;i++)assert(test_cache[i]==original[i]);
  assert(aprs_status_publish("Too long for this slot")<0);
- assert(!aprs_status_publish("ISS A120 E+20"));test_cache[0x2e]='X';assert(aprs_status_end()==-2);assert(test_cache[0x2e]=='X');return 0;}
+ assert(!aprs_status_publish("ISS A120 E+20"));test_cache[0x2e]='X';assert(aprs_status_end()==-2);assert(test_cache[0x2e]=='X');
+ assert(!aprs_status_publish("Waiting for G"));unsigned count=notifications;
+ uint8_t before[202];memcpy(before,(const void*)test_cache,202);
+ assert(!aprs_status_release());assert(notifications==count);
+ for(unsigned i=0;i<202;i++)assert(test_cache[i]==(i>=0x2e&&i<0x3b?' ':before[i]));
+ assert(!aprs_status_release());assert(notifications==count);
+ assert(!aprs_status_publish("Waiting for G"));test_cache[0x3b]=4;
+ memcpy(before,(const void*)test_cache,202);assert(aprs_status_release()==-2);assert(!memcmp(before,(const void*)test_cache,202));
+ assert(!aprs_status_publish("Waiting for G"));test_cache[0x2e]='X';
+ memcpy(before,(const void*)test_cache,202);assert(aprs_status_release()==-2);assert(!memcmp(before,(const void*)test_cache,202));
+ return 0;}

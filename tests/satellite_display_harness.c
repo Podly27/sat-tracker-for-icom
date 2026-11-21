@@ -26,7 +26,9 @@ int main(void){
  tx=1;tick=2000;satellite_display_text("Waiting for GPS");assert(notifications==2);
  tx=0;mode=4;tick=3000;satellite_display_text("Waiting for GPS");assert(notifications==2);
  mode=7;tick=4000;satellite_display_text("ISS pass: 7 min left");assert(notifications==3&&!memcmp((const void*)(test_cache+0x2e),"ISS pass: 7 m",13));
- satellite_display_end();assert(!logs&&!pauses&&!fd);assert(notifications==4);assert(!memcmp(saved,(const void*)test_cache,202));
+ satellite_display_end();assert(!logs&&!pauses&&!fd);assert(notifications==3);
+ for(unsigned i=0;i<202;i++)if(i>=0x2e&&i<0x3b)assert(test_cache[i]==' ');else if(i!=0x3b&&i!=0&&i!=0x51)assert(test_cache[i]==saved[i]);
+ assert(test_cache[0x3b]==13&&test_cache[0]==(saved[0]|0x20)&&test_cache[0x51]==(saved[0x51]|8));
  satellite_display_end();assert(!logs&&!pauses);
  satellite_display_begin(&a);satellite_display_end();assert(!logs&&!pauses);
  return 0;

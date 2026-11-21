@@ -56,3 +56,14 @@ int aprs_status_end_trace(void (*trace)(unsigned)){
 }
 
 int aprs_status_end(void){return aprs_status_end_trace(0);}
+
+/* The loader owns repaint while stopping an app. Do not call a native UI
+ * notification or replay a stale snapshot of its visibility/update flags.
+ * Blank only our characters; leave newer receiver content untouched. */
+int aprs_status_release(void){
+ if(!active)return 0;
+ unsigned c=lock();int owned=CACHE[0x3b]==13;
+ for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
+ if(owned)for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=' ';
+ active=0;unlock(c);return owned?0:-2;
+}
