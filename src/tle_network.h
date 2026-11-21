@@ -11,6 +11,9 @@ void tle_http_init(TleHttp*);
 int tle_http_feed(TleHttp*,const char*,unsigned);
 int tle_http_finish(TleHttp*);
 int tle_network_supported(const Api*);
+typedef struct {int result,error;unsigned elapsed;} TleConnectDiag;
+void tle_network_numeric(int enabled);
+const TleConnectDiag *tle_network_diagnostics(void);
 int tle_network_fetch(Api*,TleHttp*,const char **source);
 const char *tle_network_status(void);
 #endif

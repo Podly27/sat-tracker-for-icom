@@ -1,9 +1,9 @@
 {
   "version": "0.17.0-probe",
   "display_name": "ISS DISPLAY",
-  "code_bytes": 52808,
+  "code_bytes": 52720,
   "bss_bytes": 2328,
   "stack_bytes": 8192,
   "target": "IC-705 705E140 / SQ6EMM v8 or v14 native text dialog probe",
-  "sha256": "a75a4bc1a12fa1de1e5179a2658902bc0cd2d82f4cab5b580607e2894e41374f"
+  "sha256": "2bbd8322ea7c1cb8167368e1fd720541ff7f28a64fbac66d19c3c93d9dd4c28c"
 }

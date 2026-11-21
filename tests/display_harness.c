@@ -19,6 +19,6 @@ int main(int argc,char**argv){assert(argc==2);missing=!strcmp(argv[1],"missing")
  Api a={.abi=3,.radio=0x705,.build=0x07051405,.size=0x90,.clear=clear_,.line=line_,.sleep=sleep_,.stop=stop_,.clock=clock_,.open=open_,.read=read_,.close=close_,.popup=popup_};
  assert(app_main(&a)==0);
  if(missing||!fix||expired)assert(!calls);
- else{assert(calls==1);assert(strstr(text,"ISS AZ 105 deg E"));assert(strstr(text,"EL +13 deg / 1306 km"));unsigned lines=1,width=0;for(const char*p=text;*p;p++){if(*p=='\n'){assert(width<=31);lines++;width=0;}else width++;}assert(lines==7&&width<=31);}
+ else{assert(calls==1);assert(strstr(text,"ISS AZ 105 deg E"));assert(strstr(text,"EL +13 / 1306 km"));unsigned lines=1,width=0;for(const char*p=text;*p;p++){if(*p=='\n'){assert(width<=31);lines++;width=0;}else width++;}assert(lines==7&&width<=31);}
  return 0;
 }

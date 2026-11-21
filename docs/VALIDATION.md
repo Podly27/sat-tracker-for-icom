@@ -40,3 +40,9 @@ Twenty-seven host test methods pass. Network tests exercise HTTP fragmentation/f
 A live CelesTrak response (168-byte body) was downloaded on the development computer and accepted by the same C streaming parser with 17-byte fragmentation. This tests server-format compatibility, not the radio socket/TLS implementation.
 
 The native-dialog probe adds a 28th host test method with five scenarios (valid position, missing TLE, expired TLE, no GPS and popup busy). The mock checks seven popup lines, width limits and one-time opening. These tests do not emulate the real native widget or LCD.
+
+## Second diagnostic round
+
+Twenty-nine host test methods pass. The FRQ test covers missing/stale elements, GPS loss, unsupported bindings, menus, non-FM and active TX. The native popup was reported to appear on hardware; the first HTTPS probe was reported to fail connection, so successful radio TLE retrieval is not claimed.
+
+The compiled FRQTEXT ARM image was also run locally with the owner's private v8 firmware under Unicorn outside the sandbox (JIT allocation is blocked inside it). The real Icom GPS helpers and text-wrapper instructions ran. GPU primitives and ICAP callbacks were mocked. Main/RX produced the expected text arguments at x=12/y=96, no CI-V frames, and only the two native UI dirty-flag writes on STOP; menu/TX cases produced no drawing or native writes. Observed stack use was 1,424 bytes. This does not test real GPU scheduling, LCD output or native repaint completion.

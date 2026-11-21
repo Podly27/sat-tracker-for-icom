@@ -6,7 +6,7 @@ Status: 2026-11-21. This is a development report, not a claim of device validati
 
 Our previous statement that firmware v8 had no networking API was incorrect. The app's local `Api` declaration stopped at offset 0x50; reverse engineering the **extended** table in v8 and v14 found network callbacks beyond that boundary. No firmware update is inherently required just to investigate networking on v8.
 
-The tracker remains targeted at v8. The separate experimental **TLECHECK.app** recognises the network function table of v8 and v14. That does not make the tracker radio-control bindings v14-compatible.
+The tracker remains targeted at v8. The separate experimental **TLEDNS.app / TLEIP.app** recognises the network function table of v8 and v14. That does not make the tracker radio-control bindings v14-compatible.
 
 ## Pinned evidence
 
@@ -31,7 +31,7 @@ The reverse-engineered ARM32 table offsets are:
 
 Run `python3 tools/audit_network_table.py /path/to/privately-decoded-main.bin` to reproduce the read-only table checks.
 
-Pointers are Thumb-tagged. `tle_network_supported()` checks all five readiness/transport pointers plus radio/build/ABI/size before any network call. These are inferred internal interfaces, not an upstream public SDK contract.
+Pointers are Thumb-tagged. `tle_network_supported()` checks the five readiness/transport pointers and the native-error callback plus radio/build/ABI/size before any network call. These are inferred internal interfaces, not an upstream public SDK contract.
 
 In the v14 connect wrapper, flag bit 2 selects UDP (`type=2`, `protocol=17`). With bit 2 clear, flag bit 0 selects `type=1`, `protocol=100`, versus ordinary TCP protocol 6. The secure branch also configures socket option 0x2d with the hostname. We infer a TLS path from this, but **certificate validation, SNI semantics and TLS interoperability have not been verified on the radio**. The probe uses port 443 and flags 1; there is no plaintext HTTP fallback.
 
@@ -43,7 +43,7 @@ Build:
 python3 tools/build.py --probe
 ```
 
-The result is `build/network-probe/TLECHECK.app`; a matching prebuilt copy is in [`experimental/TLECHECK.app`](../experimental/TLECHECK.app). Copy it into the radio's Apps directory, keep the matching upstream firmware support files installed, connect the radio to a network with internet access, set the clock to UTC, and start the check through Apps. Stop the tracker and other apps first.
+The result is `build/network-probe/TLEDNS.app`; a matching prebuilt copy is in [`experimental/TLEDNS.app`](../experimental/TLEDNS.app). Copy it into the radio's Apps directory, keep the matching upstream firmware support files installed, connect the radio to a network with internet access, set the clock to UTC, and start the check through Apps. Stop the tracker and other apps first.
 
 The check:
 
@@ -80,3 +80,9 @@ That requires a dedicated, verified firmware/UI bridge or a supported extension 
 ## Next integration gate
 
 After a real-radio HTTPS result, integrate downloads into tracker startup with offline fallback, fresh-epoch validation and durable file replacement. Audit v14's radio-state callback and all existing GPS/CI-V/session bindings before enabling v14 tuning. The main-screen UI bridge is a separate task; neither feature is claimed complete by this probe.
+
+## Device feedback and second diagnostic round
+
+The operator reports `NET CONNECT FAILED` from the first HTTPS probe and confirms that the native ISS popup appeared; native CLOSE obscured its lower rows. The revised dialog uses only four information rows. DNS/IP checks and error capture are described in [the four-app procedure](../experimental/README.md).
+
+A separate experimental v8-only FRQTEXT app now tests native drawing at x=12/y=96 without a firmware hook or RX-message injection. It uses the native text wrapper at 0x2037b88d and rectangle routine at 0x2014775c, gated by normal-screen visibility, FM and RX. It requests native UI redraw through the two existing UI dirty flags on STOP. This is an app-thread drawing experiment; it does not remove the need for a production UI-thread bridge and does not claim a stable overlay or graphic compass.

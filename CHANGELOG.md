@@ -1,5 +1,12 @@
 # Changelog
 
+## Diagnostic round 2 — 2026-11-21
+
+- Split network tests into TLEDNS/TLEIP with TCP443 control, captured TLS wrapper/native errors and elapsed times; keep HTTP Host names when connecting by numeric IP.
+- Reserve the popup's lower three rows for CLOSE after real-device feedback.
+- Add a v8-only FRQTEXT app using pinned native draw functions without a firmware patch or RX-message injection. Hardware rendering remains experimental.
+- 29 host test methods pass. FRQ ARM execution verifies native text-wrapper arguments and menu/TX suppression with mocked GPU calls.
+
 ## 0.17.0-probe — 2026-11-21 (experimental)
 
 - Identify extended socket callbacks in v8 and v14, correcting the earlier networking limitation claim.

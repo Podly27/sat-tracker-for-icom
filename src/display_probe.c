@@ -39,9 +39,11 @@ int app_main(Api*a){
   unsigned sector=((unsigned)(q.az+22.5)/45)%8;
   static const char *directions[]={"N","NE","E","SE","S","SW","W","NW"};
   static const char *markers[]={"^","/",">","\\","v","/","<","\\"};
+  /* Native CLOSE occupies the lower-right part of the seven-line error
+   * dialog. Keep all information in the first four rows and reserve the rest. */
   snprintf(popup_text,sizeof(popup_text),
-   "ISS AZ %03u deg %s\nEL %+03d deg / %ld km\nN ^     E >     S v     W <\nISS direction: %s %s\n%s\nSnapshot %02u:%02u:%02u UTC\nBACK closes / Apps STOP ends",
-   (unsigned)(q.az+0.5)%360,directions[sector],(int)q.el,(long)(q.range+0.5),markers[sector],directions[sector],q.el>=0?"ISS ABOVE HORIZON":"ISS BELOW HORIZON",c.hour,c.minute,c.second);
+   "ISS AZ %03u deg %s\nEL %+03d / %ld km\nDirection %s %s / %s\n%02u:%02u:%02u UTC\n\n\n",
+   (unsigned)(q.az+0.5)%360,directions[sector],(int)q.el,(long)(q.range+0.5),markers[sector],directions[sector],q.el>=0?"ABOVE":"BELOW",c.hour,c.minute,c.second);
   a->line(3,"Opening native ISS info popup");
   int r=a->popup(popup_text);
   a->line(4,r==0?"BACK closes the popup":"Popup busy: close other dialog");

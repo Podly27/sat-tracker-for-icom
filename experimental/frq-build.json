@@ -1,0 +1,9 @@
+{
+  "version": "0.17.0-probe",
+  "display_name": "FRQ TEXT TEST",
+  "code_bytes": 52632,
+  "bss_bytes": 2072,
+  "stack_bytes": 8192,
+  "target": "IC-705 705E140 / SQ6EMM v8 native drawing probe",
+  "sha256": "24511feb7cfb70864dc006a6967a0c18ea8457265f08b44e8c2522646e093297"
+}

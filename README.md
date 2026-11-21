@@ -6,10 +6,11 @@
 |---|---|
 | Standalone ISS GPS/Doppler tracking and STOP restoration | Existing v8 target; see hardware/software validation notes below |
 | Startup TLE-age check and AOS/LOS search | Implemented locally in 0.16.0; device verification pending |
-| Internet TLE retrieval | Extended v8/v14 socket API identified; separate experimental `TLECHECK.app` built and host-tested; radio verification pending |
+| Internet TLE retrieval | Extended v8/v14 socket API identified; separate `TLEDNS.app` / `TLEIP.app` compare hostname and numeric TCP/TLS; first probe reported connection failure |
 | Tracker radio control on v14 | Not yet supported/validated; v14 probe compatibility does not imply tracker compatibility |
-| Native ISS detail popup | Experimental `DISPCHK.app` shows azimuth/elevation and a direction marker in a native text dialog; snapshot only; radio verification pending |
-| SAT status under the main frequency and graphic compass | APRS native path analysed; dedicated UI bridge still required; not implemented |
+| Native ISS detail popup | Native text dialog appeared on the radio; `DISPCHK.app` now reserves space for CLOSE; snapshot only |
+| Text below the main frequency | Experimental v8-only `FRQTEXT.app` uses native draw routines; host/ARM checks passed, radio test pending |
+| Live graphical compass / production display integration | Dedicated UI-thread bridge still required; not implemented |
 
 **Correction:** an earlier development note said v8 exposed no network API. It does: our original header omitted the extended entries. See [network research, test procedure and native display findings](docs/NETWORK-AND-DISPLAY.md).
 
@@ -169,4 +170,4 @@ Icom firmware and manuals are not licensed or distributed by this repository. Ic
 
 The startup screen validates ISS.TLE against its orbital epoch and the radio UTC clock, waits for internal GPS, then calculates the next AOS/LOS before entering the receive screen. TLE older than 24 hours is flagged; validated data within the existing seven-day limit can still be used offline. Missing, invalid or expired elements prevent tuning. STOP can cancel startup without changing radio settings.
 
-**Automatic in-radio updates are not enabled in the tracker yet.** Analysis of the extended ICAP tables found socket callbacks in both v8 and v14; our earlier claim that v8 had no network API was incorrect. The separate experimental `TLECHECK.app` probes HTTPS without tuning or SD writes. See [network and native display research](docs/NETWORK-AND-DISPLAY.md). Until device verification is complete, update the card with `tools/update_tle.py` on a computer.
+**Automatic in-radio updates are not enabled in the tracker yet.** Analysis of the extended ICAP tables found socket callbacks in both v8 and v14; our earlier claim that v8 had no network API was incorrect. The experimental `TLEDNS.app` and `TLEIP.app` compare hostname and numeric TCP/TLS without tuning or SD writes. See [network and native display research](docs/NETWORK-AND-DISPLAY.md). Until device verification is complete, update the card with `tools/update_tle.py` on a computer.

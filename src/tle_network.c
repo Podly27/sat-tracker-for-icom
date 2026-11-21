@@ -2,6 +2,10 @@
 #include <string.h>
 #include <stdint.h>
 #define BODY_LIMIT 262144u
+static int numeric_mode;
+static TleConnectDiag connection[2]={{-999,0,0},{-999,0,0}};
+void tle_network_numeric(int enabled){numeric_mode=enabled!=0;}
+const TleConnectDiag *tle_network_diagnostics(void){return connection;}
 static const char *message="NET: NOT STARTED";
 const char *tle_network_status(void){return message;}
 void tle_http_init(TleHttp*p){memset(p,0,sizeof(*p));}
@@ -96,13 +100,16 @@ int tle_http_finish(TleHttp*p){
 int tle_network_supported(const Api*a){
  if(!a||a->radio!=0x705||a->build!=0x07051405||a->abi!=3||a->size<0x84)return 0;
  uintptr_t connect=(uintptr_t)a->net_connect;
- if(connect==0x2037c455)return (uintptr_t)a->net_ready==0x2037b551&&(uintptr_t)a->net_send==0x2037bb29&&(uintptr_t)a->net_recv==0x2037bc3d&&(uintptr_t)a->net_close==0x2037b611;
- if(connect==0x2037c601)return (uintptr_t)a->net_ready==0x2037b579&&(uintptr_t)a->net_send==0x2037bc21&&(uintptr_t)a->net_recv==0x2037bd35&&(uintptr_t)a->net_close==0x2037b639;
+ if(connect==0x2037c455)return (uintptr_t)a->net_ready==0x2037b551&&(uintptr_t)a->net_send==0x2037bb29&&(uintptr_t)a->net_recv==0x2037bc3d&&(uintptr_t)a->net_close==0x2037b611&&(uintptr_t)a->net_error==0x2037b563;
+ if(connect==0x2037c601)return (uintptr_t)a->net_ready==0x2037b579&&(uintptr_t)a->net_send==0x2037bc21&&(uintptr_t)a->net_recv==0x2037bd35&&(uintptr_t)a->net_close==0x2037b639&&(uintptr_t)a->net_error==0x2037b58b;
  return 0;
 }
 /* Private entry also used by host transport tests after explicit mock binding. */
 int tle_network_fetch_bound(Api*a,TleHttp*p,const char **source){
  static const char *hosts[]={"celestrak.org","www.amsat.org"};
+ /* Public IPv4 addresses resolved 2026-11-21; diagnostic fixtures, not permanent endpoints. */
+ static const char *ips[]={"104.168.149.178","104.20.25.253"};
+ memset(connection,0,sizeof(connection));connection[0].result=connection[1].result=-999;
  static const char *requests[]={
   "GET /NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE HTTP/1.1\r\nHost: celestrak.org\r\nUser-Agent: ISS-tracker/0.17-probe\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n",
   "GET /tle/current/nasabare.txt HTTP/1.1\r\nHost: www.amsat.org\r\nUser-Agent: ISS-tracker/0.17-probe\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n"};
@@ -112,7 +119,9 @@ int tle_network_fetch_bound(Api*a,TleHttp*p,const char **source){
   *source=hosts[i];message="NET: HTTPS CONNECT";a->line(3,hosts[i]);a->line(4,message);
   /* Flags bit 0 selects protocol 100, the firmware's secure TCP path.
    * Flags bit 2 would select UDP and is deliberately never used here. */
-  int fd=a->net_connect(hosts[i],443,1,5000);
+  unsigned connect_start=a->ticks();
+  int fd=a->net_connect(numeric_mode?ips[i]:hosts[i],443,1,10000);
+  connection[i].result=fd;connection[i].error=fd<0&&a->net_error?a->net_error():0;connection[i].elapsed=a->ticks()-connect_start;
   if(fd<0){message="NET: CONNECT FAILED";continue;}
   unsigned start=a->ticks(),sent=0;int bad=0;
   while(sent<strlen(requests[i])){

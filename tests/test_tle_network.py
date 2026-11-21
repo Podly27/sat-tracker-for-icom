@@ -57,5 +57,5 @@ class NetworkParserTests(unittest.TestCase):
     def test_transport_cleanup(self):
         binary=Path(self.tmp.name)/'transport'
         subprocess.run(['cc','-std=c11','-I'+str(ROOT/'src'),str(ROOT/'tests/network_transport_harness.c'),str(ROOT/'src/tle_network.c'),'-o',str(binary)],check=True)
-        for case in ['success','offline','connect-fail','send-fail','read-fail','cancel','fallback','timeout','unsupported','profiles']:
+        for case in ['success','offline','connect-fail','send-fail','read-fail','cancel','fallback','timeout','unsupported','profiles','numeric']:
             with self.subTest(case=case):subprocess.run([str(binary),case,str(ROOT/'tests/fixtures/iss-historical.tle')],check=True)

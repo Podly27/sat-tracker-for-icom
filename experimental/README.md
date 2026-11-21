@@ -1,15 +1,35 @@
-# Experimental HTTPS probe
+# Experimental radio checks
 
-`TLECHECK.app` is a separate diagnostic application, not a replacement for `ISS.app`. It has not been verified on radio hardware. It targets the pinned IC-705 E v8/v14 network callback tables, makes no tuning/PTT commands, and does not write to the SD card.
+These are separate diagnostic apps, not a replacement for the tracker. Stop each app before starting the next. They make no CI-V/PTT commands and do not write to SD. Device results remain necessary.
 
-Copy it to `IC-705/Apps` alongside the matching firmware support files, stop other apps, connect the radio to the internet and start it through Apps. Record the source and final status, then use STOP.
+## 1. TLEDNS.app — hostname
 
-See [the full test procedure and limitations](../docs/NETWORK-AND-DISPLAY.md). Build with `python3 tools/build.py --probe`.
+First opens ordinary TCP port 443 to `celestrak.org` (no HTTP request and no TLS). Then tries HTTPS TLE retrieval from CelesTrak and AMSAT using hostnames. It reports `TCP443 C:… E:…`, `CL TLS C:… E:…` and `AM TLS C:… E:…` plus elapsed milliseconds. `C >= 0` is an opened handle; negative values are wrapper failures. `E` is the captured native socket error at failure. `NOT ATTEMPTED` is not a success.
 
-## Native ISS text popup
+## 2. TLEIP.app — direct IPv4
 
-`DISPCHK.app` is a separate experimental native information-dialog check. It reads internal GPS and `ISS.TLE` (falling back to `SATELITE.TLE`), computes ISS azimuth/elevation/range and opens the firmware's seven-line text popup. It uses no CI-V/PTT or SD writes and does not inject receive packets. Close the popup with BACK, then stop the app through Apps. Run again for an updated snapshot.
+Same test using `104.168.149.178` for CelesTrak and `104.20.25.253` for AMSAT, resolved on 2026-11-21. The HTTP Host headers remain the proper hostnames. These IPs are diagnostic fixtures and may change.
 
-This is **text with a direction marker, not a live graphical compass**. It does not yet display status under the main frequency. That requires the separate native display bridge described in the research notes. Build with `python3 tools/build.py --display-probe`. Hardware behavior remains to be verified.
+**Compare TCP results first.** Hostname TCP failing while numeric TCP succeeds points toward name resolution. Numeric HTTPS failing does not alone diagnose DNS: supplying an IP also changes the name seen by the firmware TLS setup (SNI/certificate checking). The tests do not disable TLS checks and do not download over plaintext HTTP. Neither test stores the downloaded TLE.
 
-The firmware Apps scanner accepts at most eight application files. If adding both probes exceeds that limit, temporarily move an unused app outside Apps rather than deleting it; restore it after testing.
+Build: `python3 tools/build.py --probe` and `python3 tools/build.py --probe --probe-ip`. These supersede the original `TLECHECK.app`.
+
+## 3. DISPCHK.app — native information dialog
+
+Reads internal GPS and `ISS.TLE` (falling back to `SATELITE.TLE`), calculates azimuth/elevation/range and opens a text popup. The first four lines carry the information; the last three are reserved for native CLOSE. The native error-dialog icon is part of that widget, not a claim that ISS tracking failed.
+
+The popup is a **snapshot with a text direction marker, not a live graphical compass**. Close with CLOSE/BACK, then use Apps STOP. Run again for a fresh snapshot.
+
+Build: `python3 tools/build.py --display-probe`.
+
+## 4. FRQTEXT.app — text below the main frequency (v8 only)
+
+Reads GPS/TLE and attempts to paint `ISS AZ… EL… IN RANGE/BELOW` at native coordinates x=12, y=96. Start in FM, use EXIT until the ordinary frequency screen is visible and look below the frequency. Drawing is suppressed in menus/Apps, other modes and TX. Use Apps STOP when finished; the app requests a native redraw on exit.
+
+This uses original native drawing routines directly, not invented APRS receive packets. It does not patch firmware code or install rendering hooks. **This app-task drawing path is experimental:** the native renderer may overwrite it or produce flicker. A proper UI-thread bridge is still required for production integration. Native GPU scheduling, LCD placement and complete redraw after STOP need device verification.
+
+Build: `python3 tools/build.py --frq-probe`. The IC-705 E v8 callback and drawing signatures must match; the test refuses other firmware bindings.
+
+## Card contents
+
+The Apps scanner has an eight-file limit and macOS `._*.app` metadata can consume entries. For this test round, keep only the four named test apps in Apps. Preserve other apps in a backup directory outside Apps, retain CFG/TLE and matching firmware support BIN files, and move macOS app sidecars outside Apps before ejecting the card.
