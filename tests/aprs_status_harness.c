@@ -8,7 +8,8 @@ void test_dirty(void){notifications++;}
 int main(void){Api a={0};assert(aprs_status_supported(&a));
  for(unsigned i=0;i<202;i++)test_cache[i]=(uint8_t)i;
  uint8_t original[202];for(unsigned i=0;i<202;i++)original[i]=test_cache[i];
- assert(!aprs_status_publish("ISS A105 E+13"));assert(notifications==1);
+ assert(!aprs_status_publish("ISS A105 E+13"));assert(notifications==1);assert(test_cache[0x50]==0);
+ for(unsigned i=0;i<20;i++)assert(test_cache[0x3c+i]==' ');
  assert(!memcmp((const void*)(test_cache+0x2e),"ISS A105 E+13",13));assert(test_cache[0x3b]==13);
  assert(!aprs_status_publish("ISS A110 E+15"));assert(!aprs_status_end_trace(trace));assert(stage==3);
  for(unsigned i=0;i<202;i++)assert(test_cache[i]==original[i]);
@@ -23,4 +24,6 @@ int main(void){Api a={0};assert(aprs_status_supported(&a));
  memcpy(before,(const void*)test_cache,202);assert(aprs_status_release()==-2);assert(!memcmp(before,(const void*)test_cache,202));
  assert(!aprs_status_publish("Waiting for G"));test_cache[0x2e]='X';
  memcpy(before,(const void*)test_cache,202);assert(aprs_status_release()==-2);assert(!memcmp(before,(const void*)test_cache,202));
+ assert(!aprs_status_publish("WAIT ISS     "));test_cache[0x50]=5;
+ memcpy(before,(const void*)test_cache,202);assert(aprs_status_publish("21.11 15:20Z ")==-2);assert(aprs_status_release()==-2);assert(!memcmp(before,(const void*)test_cache,202));
  return 0;}

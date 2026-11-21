@@ -14,7 +14,7 @@ static void unlock(unsigned c){(void)c;}
 extern void test_dirty(void);
 static void dirty(void){test_dirty();}
 #endif
-static uint8_t saved[13],last[13],saved_length,saved_visible,saved_update;
+static uint8_t saved[13],last[13],saved_tail[20],saved_tail_length,saved_length,saved_visible,saved_update;
 static unsigned active;
 int aprs_status_supported(Api*a){
 #ifndef ISS_HOST_TEST
@@ -32,19 +32,25 @@ int aprs_status_publish(const char*s){
  uint8_t text[13];unsigned n=0;while(s[n]&&n<13){if((unsigned char)s[n]<32||(unsigned char)s[n]>126)return -1;text[n]=s[n];n++;}
  if(s[n]||!n)return -1;for(unsigned i=n;i<13;i++)text[i]=' ';
  unsigned c=lock();
+ if(active&&CACHE[0x50]){unlock(c);return -2;}
  if(active){for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i]){unlock(c);return -2;}}
  else{
+  for(unsigned i=0;i<20;i++)saved_tail[i]=CACHE[0x3c + i];saved_tail_length=CACHE[0x50];
   for(unsigned i=0;i<13;i++)saved[i]=CACHE[0x2e + i];saved_length=CACHE[0x3b];saved_visible=CACHE[0]&0x20;saved_update=CACHE[0x51]&8;active=1;
  }
  for(unsigned i=0;i<13;i++){CACHE[0x2e + i]=text[i];last[i]=text[i];}
+ /* Native RX text concatenates the 13-byte name and this 20-byte tail.
+  * A stale tail would extend SAT pages and trigger the native scroller. */
+ for(unsigned i=0;i<20;i++)CACHE[0x3c + i]=' ';CACHE[0x50]=0;
  CACHE[0x3b]=(uint8_t)n;CACHE[0]|=0x20;CACHE[0x51]|=8;unlock(c);dirty();return 0;
 }
 int aprs_status_end_trace(void (*trace)(unsigned)){
  if(trace)trace(2);
  if(!active){if(trace)trace(4);return 0;}
- unsigned c=lock();int owned=1;
+ unsigned c=lock();int owned=CACHE[0x50]==0;
  for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
  if(owned){
+  for(unsigned i=0;i<20;i++)CACHE[0x3c + i]=saved_tail[i];CACHE[0x50]=saved_tail_length;
   for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=saved[i];CACHE[0x3b]=saved_length;
   CACHE[0]=(CACHE[0]&~0x20)|saved_visible;CACHE[0x51]=(CACHE[0x51]&~8)|saved_update;
  }
@@ -62,7 +68,7 @@ int aprs_status_end(void){return aprs_status_end_trace(0);}
  * Blank only our characters; leave newer receiver content untouched. */
 int aprs_status_release(void){
  if(!active)return 0;
- unsigned c=lock();int owned=CACHE[0x3b]==13;
+ unsigned c=lock();int owned=CACHE[0x3b]==13&&CACHE[0x50]==0;
  for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i])owned=0;
  if(owned)for(unsigned i=0;i<13;i++)CACHE[0x2e + i]=' ';
  active=0;unlock(c);return owned?0:-2;
