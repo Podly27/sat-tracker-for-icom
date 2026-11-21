@@ -1,5 +1,11 @@
 # Changelog
 
+## FRQ diagnostic test 5 — 2026-11-21
+
+- Use the actual mode field from the APRS IC-705 profile for the FM guard; stale ICAP cache C:70 no longer blocks current LIVE:7.
+- Show both cached/current mode values; keep TX suppression and owned display restoration.
+- Main ISS application is unchanged in this round.
+
 ## FRQ diagnostic test 4 — 2026-11-21
 
 - Use the APRS-derived final receiver-status display cache with native UI notification, not direct GPU painting or receive-packet injection.

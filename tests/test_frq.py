@@ -8,5 +8,5 @@ class FrequencyTextTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             binary=Path(tmp)/'frq'
             subprocess.run(['cc','-std=c11','-I'+str(ROOT/'vendor/sgp4'),str(ROOT/'tests/frq_harness.c'),'-lm','-o',str(binary)],check=True)
-            for case in ['success','missing','no-gps','expired','menu','tx','ssb','unsupported']:
+            for case in ['success','missing','no-gps','expired','menu','tx','ssb','unsupported','stale']:
                 with self.subTest(case=case):subprocess.run([str(binary),case],check=True)

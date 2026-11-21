@@ -22,11 +22,11 @@ The popup is a **snapshot with a text direction marker, not a live graphical com
 
 Build: `python3 tools/build.py --display-probe`.
 
-## 4. FRQTEXT.app — APRS-derived receiver-status text (test 4)
+## 4. FRQTEXT.app — APRS-derived receiver-status text (test 5)
 
 Uses the final receiver-status display cache used after APRS/native header processing. It publishes a compact `ISS A105 E+13` status and invokes the original UI notification. It does not write the RX packet mailbox or pending-receive flag and does not call the receive-history/packet-processing path. Rendering is left to the normal UI task, including when a menu is currently open.
 
-Set the ordinary radio mode to **FM** first, then start the app and use EXIT to view the frequency screen. The packed mode diagnostic must read `M:A0` for the FM gate to pass; TX suppresses publication. The `PUB` counter counts cache updates, not confirmed LCD frames. `FG/M/TX/R` and observed UI codes are now formatted correctly. Use Apps STOP to restore the original cache if it is still owned; foreign updates are preserved.
+Set the ordinary radio mode to **FM** first, then start the app and use EXIT to view the frequency screen. The current normalized mode is read from the same field used by APRS; `LIVE:7` permits FM publication. The ICAP cached byte `C:70` can be stale and no longer blocks it. TX suppresses publication. The `PUB` counter counts cache updates, not confirmed LCD frames. `C/LIVE/TX/R` and observed UI codes are now formatted correctly. Use Apps STOP to restore the original cache if it is still owned; foreign updates are preserved.
 
 Earlier diagnostics used unsupported `%X` in the tiny formatter, omitted those fields and shifted later arguments. Consequently the photographed `R:112` was not a reliable callback return code; the shifted value was consistent with packed mode `0x70`, which the FM-only test rejects. Test 4 includes actual formatter regression tests.
 

@@ -14,6 +14,7 @@ static Orbit satellite;static char data[512];
 #ifdef ISS_HOST_TEST
 extern int probe_ui_supported(Api*);
 extern unsigned probe_ui_code(void);
+extern unsigned probe_live_mode(void);
 extern void probe_redraw(void);
 #else
 static int probe_ui_supported(Api*a){
@@ -23,6 +24,10 @@ static int probe_ui_supported(Api*a){
  return 0;
 }
 static unsigned probe_ui_code(void){return *(volatile const unsigned char*)0x204b035d;}
+/* APRS.APP IC-705 E profile uses this current normalized mode byte;
+ * its FM group is 7. The ICAP VFO cache can remain packed 0x70 while
+ * the radio's native screen is FM, as confirmed in the device test. */
+static unsigned probe_live_mode(void){return (*(volatile const unsigned char*)0x203e212f)>>4;}
 static void probe_redraw(void){
  /* Known native UI redraw flags; no radio mode/frequency or RX-message fields. */
  *(volatile uint16_t*)0x20380698|=1;
@@ -42,7 +47,7 @@ __attribute__((section(".entry")))
 #endif
 int app_main(Api*a){
  if(!a||a->abi!=3||a->radio!=0x705||a->size<0x54||!a->line||!a->clear||!a->sleep||!a->stop||!a->clock||!a->radio_state||!a->open||!a->read||!a->close)return -1;
- a->clear();a->line(0,"FRQ TEXT TEST / 4 APRS UI");
+ a->clear();a->line(0,"FRQ TEXT TEST / 5 APRS FM");
  a->line(1,"No tuning / no PTT / no RX log");
  int drawn=0,cache_supported=aprs_status_supported(a);unsigned attempts=0,main_count=0,other_count=0,last_fg=256,last_mode=0,seen[3]={256,256,256};
  if(!probe_ui_supported(a)){a->line(3,"Unsupported native UI bindings");goto done;}
@@ -59,20 +64,20 @@ int app_main(Api*a){
   a->line(3,text);
   /* Publish only during FM/RX. The original UI task chooses when to draw
    * its receiver-status cache; this never draws over a menu from the app. */
-  unsigned fg=probe_ui_code();int result=a->radio_state(&radio);
+  unsigned fg=probe_ui_code(),live_mode=probe_live_mode();int result=a->radio_state(&radio);
   for(unsigned i=0;i<3;i++){if(seen[i]==fg)break;if(seen[i]==256){seen[i]=fg;break;}}
   if(fg==0)main_count++;else other_count++;
-  if(result==0&&!radio.tx&&(radio.mode&0xf0)==0xa0&&cache_supported){
+  if(result==0&&!radio.tx&&live_mode==7&&cache_supported){
    char compact[16];snprintf(compact,sizeof(compact),"ISS A%03u E%+03d",(unsigned)(q.az+0.5)%360,(int)q.el);
    int published=aprs_status_publish(compact);
    if(!published){drawn=1;attempts++;last_fg=fg;last_mode=radio.mode;}
    else{a->line(2,"RX display changed / STOP test");break;}
   }
   char diagnostic[32];
-  snprintf(diagnostic,sizeof(diagnostic),"FG:%02X M:%02X TX:%u R:%d",fg,radio.mode,radio.tx,result);a->line(4,diagnostic);
+  snprintf(diagnostic,sizeof(diagnostic),"C:%02X LIVE:%X TX:%u R:%d",radio.mode,live_mode,radio.tx,result);a->line(4,diagnostic);
   snprintf(diagnostic,sizeof(diagnostic),"PUB:%lu MAIN:%lu ELSE:%lu",(unsigned long)attempts,(unsigned long)main_count,(unsigned long)other_count);a->line(5,diagnostic);
   snprintf(diagnostic,sizeof(diagnostic),"UI:%02X/%02X/%02X FW:%u",seen[0],seen[1],seen[2],ui_profile);a->line(6,diagnostic);
-  if((radio.mode&0xf0)!=0xa0)a->line(2,"Set normal radio mode to FM");
+  if(live_mode!=7)a->line(2,"Set normal radio mode to FM");
   else if(!cache_supported)a->line(2,"Unsupported APRS display cache");
   else a->line(2,"APRS display cache / no RX log");
   snprintf(diagnostic,sizeof(diagnostic),"Last pub FG:%02X M:%02X",last_fg,last_mode);a->line(7,diagnostic);

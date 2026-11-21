@@ -60,3 +60,5 @@ FRQ test 3's compiled ARM code passed main/menu/TX checks with native drawing en
 ## FRQ test 4
 
 Thirty-two host test methods pass, including the actual tiny formatter and display-cache ownership/restoration. The final ARM probe ran main-FM, menu-FM, TX and packed-70 cases. The original UI notification executed after cache updates; STOP restored the previous text. TX/non-FM cases published nothing. No CI-V frames or packet-mailbox/pending-flag writes occurred. Observed stack usage was 1,504 bytes. Hardware visibility remains unverified.
+
+FRQ test 5 adds a stale-cache scenario: packed cache 0x70 with current APRS mode group 7 must publish, whereas actual non-FM group 4 and TX must not. Thirty-two host test methods pass with the additional scenario; ARM cases exercise the same distinction. Device text visibility remains pending.

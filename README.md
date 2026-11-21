@@ -9,7 +9,7 @@
 | Internet TLE retrieval | Both DNS and numeric-IP probes downloaded fresh ISS TLE on the radio; 0.18.0 integrates startup refresh and recoverable SD storage |
 | Tracker radio control on v14 | Not yet supported/validated; v14 probe compatibility does not imply tracker compatibility |
 | Native ISS detail popup | Native text dialog appeared on the radio; `DISPCHK.app` now reserves space for CLOSE; snapshot only |
-| Text below the main frequency | FRQ test 4 publishes to the APRS-derived final receiver-status display cache; native UI notification/STOP restoration tested in ARM simulation; LCD check pending |
+| Text below the main frequency | FRQ test 5 uses the APRS current-mode field rather than stale ICAP mode cache; native display-cache publication/STOP restoration tested in ARM simulation; LCD check pending |
 | Live graphical compass / production display integration | Dedicated UI-thread bridge still required; not implemented |
 
 **Correction:** an earlier development note said v8 exposed no network API. It does: our original header omitted the extended entries. See [network research, test procedure and native display findings](docs/NETWORK-AND-DISPLAY.md).
