@@ -188,3 +188,9 @@ All 47 host methods pass. A compiled ARM check additionally calls the actual nat
 ### Next-step firmware feasibility investigation
 
 Further inspection does not establish a safe internal CI-V entry point for bypassing native RX clearing from the v8 application. The 1/4 exception belongs to global native context and is not used. A separate private, source-only prototype replaces the one success-cleanup call in emulated RAM with a guarded wrapper. In 19 returning ARM scenarios, the two seeded SAT frequency footprints preserve the RX state, and the 17 rejected/manual/STOP cases retain original clearing. Unrelated RF/UI helpers are mocked. This is not an installable firmware, has not been flashed or published as a firmware artifact, and does not prove on-radio flicker elimination. Before packaging, the current-frame ownership fence and native scheduler path need validation; a seeded mailbox is insufficient evidence of a safe hardware hook. SAT.app and its SD deployment remain unchanged.
+
+## 0.36.0 remove on-screen diagnostics
+
+The owner accepts occasional retuning-related blinking and requests a clean SAT screen. This version removes the read-only UI N/S row overrides and native capture-phase/raw-CI-V row overrides. Normal CTCSS/priority and full pass status are displayed again; errors remain visible. Existing failure-only SATDBG.LOG writing is retained. No tuning, queue ownership, orbital prediction, hold/quiet-recovery or STOP behavior is changed. No experimental firmware hook is included.
+
+All 47 host methods pass. The final compiled ARM controller test confirms normal CTCSS/priority rows, no native UI diagnostic format strings in the app image, original radio restoration in 1550 simulated ms and retained SATDBG.LOG output on persistent foreign CI-V busy. The failure screen retains human pass/tone rows and its error instead of the technical phase/queue rows. No native UI notification occurs during STOP.

@@ -1,4 +1,6 @@
-# CI-V startup diagnostics (0.25)
+# CI-V startup diagnostics
+
+**Since 0.36:** technical diagnostics are removed from the Apps display. SATDBG.LOG capture-failure snapshots are retained. On-screen phase/raw fields described below apply to earlier diagnostic versions.
 
 The owner reported `RESTORE/SAVE: CIV BUSY` on the first app start after radio power-on. The photographed snapshot is `Q0R0C05 U010100000000000000`: no queued request/reply-ready flag, but parser count 5 and UART bytes 0/1 both 1. It identifies a blocked admission guard; it does not identify the producer or authorize clearing it.
 

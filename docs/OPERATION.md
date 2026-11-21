@@ -24,7 +24,7 @@ SO-50's separate 74.4 Hz activation remains manual. AO-91's default is no CTCSS 
 
 ## Startup CI-V waiting
 
-A transient busy reply during the original-setting snapshot is retried for at most 1.5 seconds for that command. The app does not clear native queue bytes, discard unknown replies or force UART idle. During the snapshot, the native field says `SAVE RADIO` or `CI-V WAIT`; normal pass status starts only after capture succeeds. A sustained busy state blocks tuning and produces `SAVE FAILED`. The Apps window retains the full error and a compact read-only transport snapshot: `Q` is queued request, `R` reply-ready, `C` parser count and `U` the nine UART-state bytes in hexadecimal. Unsupported bindings are a separate error. Restore behavior does not acquire these startup retries or extra STOP delays.
+A transient busy reply during the original-setting snapshot is retried for at most 1.5 seconds for that command. The app does not clear native queue bytes, discard unknown replies or force UART idle. During the snapshot, the native field says `SAVE RADIO` or `CI-V WAIT`; normal pass status starts only after capture succeeds. A sustained busy state blocks tuning and produces `SAVE FAILED`. The Apps window retains the error. Technical transport snapshots remain in SATDBG.LOG when capture fails; the native trace fields are: `Q` is queued request, `R` reply-ready, `C` parser count and `U` the nine UART-state bytes in hexadecimal. Unsupported bindings are a separate error. Restore behavior does not acquire these startup retries or extra STOP delays.
 
 ## EXIT and STOP
 
@@ -36,10 +36,14 @@ STOP phases are `Drain radio commands`, `Release status text`, and `Restore radi
 
 Multi-satellite changes in 0.23 have software/ARM validation and still require on-radio verification. The [earlier photograph](images/iss-tracker-radio.png) shows an older single-ISS build, not the current UI.
 
-Version 0.25 is a diagnostic candidate for the reported first-start busy condition. If capture fails, it stores read-only transport snapshots in `SATDBG.LOG` and shows the SAVE phase. Return the card after STOP/power-off for inspection. See [CI-V diagnostics](CI-V-DEBUG.md). It does not clear an unknown busy path.
+Capture-failure diagnostics introduced in 0.25 still store read-only transport snapshots in `SATDBG.LOG`. Since 0.36, SAVE-phase and raw transport fields are no longer shown on screen. Return the card after STOP/power-off for inspection. See [CI-V diagnostics](CI-V-DEBUG.md). It does not clear an unknown busy path.
 
-## UI diagnostic builds 0.31–0.35
+## Historical UI diagnostic builds 0.31–0.35
 
 Automatic scrolling still occurs on the owner's radio with 0.30; disabling it is not yet verified. These builds temporarily replaces the last two normal Apps rows (tone/priority and blank status) with read-only native UI diagnostics when no radio error is present. Radio errors take precedence. Versions 0.31–0.32 retain the 0.30 scrolling behavior. Version 0.33 is a further fixed-row candidate: it adopts an expired RX hold too, clears the owned scroll group's completion/position once, and extends that hold while active. On STOP it returns that owned hold to its prior duration without a native UI notification. Version 0.34 keeps the same hold but renews unchanged text without issuing a native redraw notification. Version 0.35 additionally detects a cleared native RX state before the next 500 ms refresh and requests restoration on the next eligible app loop. The native CI-V clear still occurs, so completely flicker-free frequency changes are not guaranteed. No extra SD logs are written.
 
 Hide SAT with EXIT, leave the normal FM/RX screen visible for at least ten seconds while the unwanted motion happens, then reopen the running SAT app and photograph both bottom diagnostic rows. They retain the latest sample from the main screen. `N` is native state/style, `H` its hold duration, `E` its elapsed counter and `Q` its pending-event flags. `S` is native scroll-group 4 flags/index, `P` its peak sampled index, `B` group 5 index, `O` the rendered output offset and `L` the native output-length byte. These raw values are observations, not a diagnosis. Normal tracking/STOP remain available.
+
+## Current display (0.36)
+
+The owner accepts occasional native blinking during retuning. No firmware modification is deployed. SAT shows the normal satellite/UTC/GPS/geometry/frequency/pass rows again, followed by CTCSS/priority and any actionable error. Native N/S rows and capture-phase/raw-transport rows are no longer shown. Existing capture-failure logging to SATDBG.LOG is retained; normal operation and STOP do not generate that log. Tuning, RX-message renewal, M:SS countdown and STOP/restoration are unchanged.

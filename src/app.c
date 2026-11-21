@@ -70,11 +70,9 @@ int app_main(Api*a){
   else snprintf(lines[6],32,"No CTCSS / priority %u",(unsigned)active+1);
   lines[7][0]=0;if(strstr(bridge,"STOP:")||strstr(bridge,"ERROR")||strstr(bridge,"SAVE:"))snprintf(lines[7],32,"%s",bridge);
   if(captured<0&&(strstr(bridge,"CIV")||strstr(bridge,"UNSUPPORTED"))){
-   snprintf(lines[5],32,"%s",radio_session_debug());snprintf(lines[6],32,"%s",civ_busy_status());
    if(!logged){logged=1;civ_trace_save(a);}
   }
   for(unsigned i=0;i<8;i++)show(i,lines[i]);
-  if(!lines[7][0]&&captured>=0){show(6,satellite_display_debug(0));show(7,satellite_display_debug(1));}
   if(captured<0)satellite_display_text("SAVE FAILED");
   else if(!captured)satellite_display_text(strstr(bridge,"WAIT CI-V")?"CI-V WAIT":"SAVE RADIO");
   else if(lines[7][0])satellite_display_text("TUNING STOP");
