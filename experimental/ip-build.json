@@ -1,9 +1,0 @@
-{
-  "version": "0.17.0-probe",
-  "display_name": "TLE HTTPS IP",
-  "code_bytes": 57332,
-  "bss_bytes": 2976,
-  "stack_bytes": 8192,
-  "target": "IC-705 705E140 / SQ6EMM v8 or v14 network probe",
-  "sha256": "3a9da9bc52bb6f82dcb86aba0e9eaa294bf57bd5fc756f51adfe2aac3c69eed5"
-}

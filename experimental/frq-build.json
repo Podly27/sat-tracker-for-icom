@@ -1,9 +1,0 @@
-{
-  "version": "0.17.0-probe",
-  "display_name": "FRQ TEXT TEST",
-  "code_bytes": 54544,
-  "bss_bytes": 2108,
-  "stack_bytes": 8192,
-  "target": "IC-705 705E140 / SQ6EMM v8/v14 APRS display-cache probe",
-  "sha256": "0cc55f6e3eda9543bb3e0c001428ae84258f9c5e3a7e0252025689d202882ddf"
-}

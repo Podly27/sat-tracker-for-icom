@@ -1,9 +1,0 @@
-{
-  "version": "0.17.0-probe",
-  "display_name": "TLE HTTPS DNS",
-  "code_bytes": 57332,
-  "bss_bytes": 2976,
-  "stack_bytes": 8192,
-  "target": "IC-705 705E140 / SQ6EMM v8 or v14 network probe",
-  "sha256": "1e9e637d1281af1db6e158c1322c806fabcf3c494972a9755ce26cb06bb39326"
-}

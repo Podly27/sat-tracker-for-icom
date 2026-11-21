@@ -1,2 +1,0 @@
-ziglang==0.17.1
-pyelftools==0.32

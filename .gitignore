@@ -1,23 +1,31 @@
-.venv/
-.cache/
-build/
-__pycache__/
-*.py[cod]
-.DS_Store
-._*
-# Operational orbit data must be refreshed, not versioned as a current TLE.
-sd-card/IC-705/Apps/ISS.TLE
-sd-card/IC-705/Apps/ISS.BAK
-# Never publish Icom firmware, decoded images, manuals, dumps or local hardware logs.
-*.dat
-*.bin
-*.elf
-*.o
-*.pdf
-
-sd-card/IC-705/Apps/satellites.TLE
-sd-card/IC-705/Apps/satellites.BAK
-*.LOG
-
-sd-card/IC-705/Apps/SAT.TLE
-sd-card/IC-705/Apps/SAT.BAK
+# Distribution-only repository: explicitly allow user-facing release files.
+# Development sources, tests, probes, caches and hardware logs stay local.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/THIRD_PARTY_NOTICES.md
+!/docs/
+/docs/*
+!/docs/CONFIG.md
+!/docs/TLE.md
+!/docs/images/
+/docs/images/*
+!/docs/images/sat-ic705.png
+!/licenses/
+/licenses/*
+!/licenses/SGP4-Unlicense.txt
+!/licenses/Zig-MIT.txt
+!/licenses/musl-COPYRIGHT.txt
+!/sd-card/
+/sd-card/*
+!/sd-card/SHA256SUMS.txt
+!/sd-card/IC-705/
+/sd-card/IC-705/*
+!/sd-card/IC-705/Apps/
+/sd-card/IC-705/Apps/*
+!/sd-card/IC-705/Apps/SAT.app
+!/sd-card/IC-705/Apps/SAT.CFG
+!/tools/
+/tools/*
+!/tools/update_tle.py

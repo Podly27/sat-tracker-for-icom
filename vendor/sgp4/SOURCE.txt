@@ -1,2 +1,0 @@
-https://github.com/aholinch/sgp4
-commit 552cb1489a52c3023ae70cb6c7e239e84c5950fe
