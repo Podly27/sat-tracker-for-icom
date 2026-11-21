@@ -42,3 +42,9 @@ A supported TX-frequency read is used when available. Some firmware rejects it; 
 The app re-reads settings to verify restoration. It waits for RX rather than restoring settings during TX. This is bounded; if restoration fails or PTT remains held, an incomplete-restore message is shown. Check the radio instead of treating that as success.
 
 The snapshot is volatile RAM. Removing power, a crash or interrupted shutdown can prevent restoration; the app does not provide a full radio backup or persistent recovery mechanism.
+
+## Startup sequence (0.16.0)
+
+The startup screen validates ISS.TLE against its orbital epoch and the radio UTC clock, waits for internal GPS, then calculates the next AOS/LOS before entering the receive screen. TLE older than 24 hours is flagged; validated data within the existing seven-day limit can still be used offline. Missing, invalid or expired elements prevent tuning. STOP can cancel startup without changing radio settings.
+
+**Automatic in-radio updates are not enabled in the tracker yet.** Analysis of the extended ICAP tables found socket callbacks in both v8 and v14; our earlier claim that v8 had no network API was incorrect. The separate experimental `TLECHECK.app` probes HTTPS without tuning or SD writes. See [network and native display research](NETWORK-AND-DISPLAY.md). Until device verification is complete, update the card with `tools/update_tle.py` on a computer.

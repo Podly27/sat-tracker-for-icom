@@ -1,0 +1,9 @@
+{
+  "version": "0.17.0-probe",
+  "display_name": "TLE HTTPS CHECK",
+  "code_bytes": 56420,
+  "bss_bytes": 2972,
+  "stack_bytes": 8192,
+  "target": "IC-705 705E140 / SQ6EMM v8 or v14 network probe",
+  "sha256": "2b606606956a95fe2f8a64e142df14e08a2c139b74f55ac125a696ecb6e8f087"
+}

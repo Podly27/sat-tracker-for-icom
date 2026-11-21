@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+<title id="title">Proposed SAT main-screen integration — design only</title>
+<desc id="desc">Illustrative design, not implemented firmware or a radio screenshot. FM and frequency remain visible, with ISS status below and a satellite detail panel with a polar plot.</desc>
+<rect width="960" height="640" fill="#080d13"/>
+<g font-family="Arial,sans-serif" fill="#eaf5fa">
+<text x="30" y="35" fill="#ffc567" font-size="19">DESIGN PROPOSAL · NOT IMPLEMENTED · EXAMPLE VALUES</text>
+<rect x="30" y="60" width="110" height="40" rx="4" fill="#2389b5"/>
+<text x="63" y="89" font-size="29">FM</text><text x="165" y="88" font-size="23">FIL1</text>
+<text x="660" y="88" font-size="23">VFO A · SPLIT</text>
+<text x="90" y="161" font-size="66">437.790.246</text>
+<text x="44" y="202" font-size="25" fill="#65d5f4">ISS IN RANGE · EL +13° · LOS IN 02:55</text>
+<rect x="30" y="226" width="900" height="350" rx="6" fill="#111f2c" stroke="#469abb" stroke-width="2"/>
+<rect x="30" y="226" width="900" height="46" rx="5" fill="#2389b5"/>
+<text x="50" y="257" font-size="25">ISS tracker · Satellite details</text>
+<g stroke="#456b7d" fill="none" transform="translate(210 419)">
+<circle r="113"/><circle r="75"/><circle r="37"/>
+<path d="M-113 0H113M0-113V113"/>
+<path d="M-106 37Q-20-142 107 34" stroke="#6ad5ef" stroke-width="3" stroke-dasharray="6 6"/>
+<circle cx="102" cy="27" r="8" fill="#82efb3" stroke="#82efb3"/>
+</g>
+<text x="203" y="298" font-size="19">N</text><text x="331" y="425" font-size="19">E</text>
+<text x="460" y="321" font-size="23">ISS / FM repeater</text>
+<text x="460" y="364" font-size="31" fill="#82efb3">LOS in 02:55</text>
+<text x="460" y="404" font-size="25">AZ 105° · EL +13°</text>
+<text x="460" y="447" font-size="25">RX A 437.790.246 MHz</text>
+<text x="460" y="487" font-size="25">TX B 145.993.253 MHz</text>
+<text x="460" y="531" font-size="21" fill="#9bb6c6">GPS FIX · TLE valid · Doppler ON</text>
+<text x="40" y="616" font-size="21" fill="#9bb6c6">Dedicated satellite UI bridge; no invented APRS receive messages.</text>
+</g></svg>

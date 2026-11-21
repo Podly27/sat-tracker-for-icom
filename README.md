@@ -1,5 +1,18 @@
 # ISS tracker for IC-705
 
+## Current development status — 2026-11-21
+
+| Capability | Status |
+|---|---|
+| Standalone ISS GPS/Doppler tracking and STOP restoration | Existing v8 target; see hardware/software validation notes below |
+| Startup TLE-age check and AOS/LOS search | Implemented locally in 0.16.0; device verification pending |
+| Internet TLE retrieval | Extended v8/v14 socket API identified; separate experimental `TLECHECK.app` built and host-tested; radio verification pending |
+| Tracker radio control on v14 | Not yet supported/validated; v14 probe compatibility does not imply tracker compatibility |
+| SAT status under the main frequency and graphic detail view | APRS native path analysed; dedicated UI bridge still required; not implemented |
+
+**Correction:** an earlier development note said v8 exposed no network API. It does: our original header omitted the extended entries. See [network research, test procedure and native display findings](docs/NETWORK-AND-DISPLAY.md).
+
+
 A standalone **ISS FM cross-band repeater tracker** that runs on the Icom IC-705 as an ICAP application from its microSD card. It uses the radio's internal GPS, calculates the ISS position and Doppler correction, and controls VFO A/B through the radio's native CI-V processing.
 
 **Alternative firmware is required. Stock Icom firmware cannot run this application.** This release targets **SQ6EMM `705E140_20261119v8`**, ICAP ABI 3 / build `0x07051405`. Other SQ6EMM versions, including newer releases, are not automatically compatible.
@@ -150,3 +163,9 @@ The output is `build/ISS.app`. Building does not require, fetch, or modify an Ic
 - Project-authored application/tooling/documentation: [MIT](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for vendored code and linked toolchain runtime notices.
 
 Icom firmware and manuals are not licensed or distributed by this repository. Icom and IC-705 are names/trademarks of their respective owner.
+
+## Startup sequence (0.16.0)
+
+The startup screen validates ISS.TLE against its orbital epoch and the radio UTC clock, waits for internal GPS, then calculates the next AOS/LOS before entering the receive screen. TLE older than 24 hours is flagged; validated data within the existing seven-day limit can still be used offline. Missing, invalid or expired elements prevent tuning. STOP can cancel startup without changing radio settings.
+
+**Automatic in-radio updates are not enabled in the tracker yet.** Analysis of the extended ICAP tables found socket callbacks in both v8 and v14; our earlier claim that v8 had no network API was incorrect. The separate experimental `TLECHECK.app` probes HTTPS without tuning or SD writes. See [network and native display research](docs/NETWORK-AND-DISPLAY.md). Until device verification is complete, update the card with `tools/update_tle.py` on a computer.

@@ -61,7 +61,10 @@ static void pass_work(void){
  }
 }
 static void freq(char*b,int32_t hz){snprintf(b,16,"%03ld.%03ld.%03ld",(long)(hz/1000000),(long)((hz/1000)%1000),(long)(hz%1000));}
-__attribute__((section(".entry"))) int app_main(Api *a){
+#ifndef ISS_HOST_TEST
+__attribute__((section(".entry")))
+#endif
+int app_main(Api *a){
  api=a;if(!a||a->radio!=0x705||a->build!=0x07051405||a->abi<3||a->size<0x54||!a->clock)return -1;
 #if defined(ISS_RX_CONTROL)||defined(ISS_SAT_CONTROL)
  if(!a->radio_state||!a->ticks||!a->stop||!a->sleep||!a->line||!a->clear)return -1;
@@ -78,17 +81,34 @@ __attribute__((section(".entry"))) int app_main(Api *a){
  if(probe==0){for(unsigned i=0;i<10&&civ_read_probe_pending();i++)a->sleep(100);bridge=civ_read_probe_pending()?"CIV QUEUE: TIMEOUT":"CIV QUEUE: CONSUMED";}
  else bridge=probe==-2?"CIV QUEUE: UNSUPPORTED":"CIV QUEUE: BUSY";
 #endif
- if(elements()){wait_error(APP_TLE " invalid / missing");return -4;}
- uint32_t prev=0;double oldlat=1000,oldlon=1000;
+ status("Checking ISS.TLE...");
+ if(elements()){show(5,"Update ISS.TLE on SD card");wait_error(APP_TLE " invalid / missing");return -4;}
+ uint32_t prev=0;double oldlat=1000,oldlon=1000;int startup_ready=0,age_shown=0;
  while(!a->stop()){
-  RadioClock c;if(a->clock(&c)<0||c.year<2025||c.year>2099||c.month<1||c.month>12||c.day<1||c.day>31){bridge=control(a,0,0,0,0);status("Set radio clock to UTC");a->sleep(250);continue;}
+  RadioClock c;if(a->clock(&c)<0||c.year<2025||c.year>2099||c.month<1||c.month>12||c.day<1||c.day>31){bridge=startup_ready?control(a,0,0,0,0):"STARTUP / NO RADIO CHANGES";status("Set radio clock to UTC");a->sleep(250);continue;}
   uint32_t now=utc_seconds(c.year,c.month,c.day,c.hour,c.minute,c.second);
   GpsPosition pos;int gps=gps_read(&pos);
-  if(gps!=GPS_OK){bridge=control(a,0,0,0,0);status(gps==GPS_NO_FIX?"GPS: WAITING FOR FIX":gps==GPS_UNSUPPORTED?"GPS: FIRMWARE MISMATCH":gps==GPS_UNSTABLE?"GPS: UPDATING POSITION":"GPS: INVALID COORDINATES");show(4,"Use internal GPS / clear sky");a->sleep(1000);continue;}
+  if(gps!=GPS_OK){bridge=startup_ready?control(a,0,0,0,0):"STARTUP / NO RADIO CHANGES";status(gps==GPS_NO_FIX?"GPS: WAITING FOR FIX":gps==GPS_UNSUPPORTED?"GPS: FIRMWARE MISMATCH":gps==GPS_UNSTABLE?"GPS: UPDATING POSITION":"GPS: INVALID COORDINATES");show(4,"Use internal GPS / clear sky");a->sleep(1000);continue;}
   lat=pos.lat;lon=pos.lon;alt=0;
   if(!prev||now<prev||now-prev>5||fabs(oldlat-lat)>0.02||fabs(oldlon-lon)>0.02||(los&&now>los))pass_reset(now);
   oldlat=lat;oldlon=lon;prev=now;
-  if(fabs((double)now-orbit.epoch)>7*86400){bridge=control(a,0,0,1,0);status(APP_TLE " expired (>7 days)");a->sleep(1000);continue;}
+  if(fabs((double)now-orbit.epoch)>7*86400){bridge=startup_ready?control(a,0,0,1,0):"STARTUP / NO RADIO CHANGES";status(APP_TLE " expired (>7 days)");show(4,"Automatic download not enabled");show(5,"Update ISS.TLE on SD card");a->sleep(1000);continue;}
+  if(!startup_ready){
+   if(!age_shown){
+    double age=((double)now-orbit.epoch)/3600;
+    status(age>24||age<-24?"TLE older than 24 hours":"TLE age check OK");
+    snprintf(linebuf[3],32,"Epoch offset: %+.1f hours",age);show(3,linebuf[3]);
+    show(4,"Automatic download not enabled");
+    show(5,"Using validated SD card TLE");
+    a->sleep(2500);age_shown=1;continue;
+   }
+   pass_work();
+   status("Calculating next AOS / LOS");
+   snprintf(linebuf[3],32,"Search: %lu%%",(unsigned long)(scanned*100/2881));show(3,linebuf[3]);
+   show(5,"STOP cancels startup");
+   if(!los&&nextscan<=scanend){a->sleep(10);continue;}
+   startup_ready=1;a->clear();
+  }
   Look q;if(orbit_look(&orbit,now,lat,lon,alt,&q)){bridge=control(a,0,0,1,0);status("Orbit calculation failed");a->sleep(1000);continue;}
   bridge=control(a,q.down_hz,q.up_hz,1,1);
   pass_work();
@@ -119,6 +139,7 @@ __attribute__((section(".entry"))) int app_main(Api *a){
   a->sleep(100);
  }
 #ifdef ISS_SAT_CONTROL
+ if(!startup_ready)return 0;
  sat_control_finish(a);
  a->clear();show(0,APP_DISPLAY " / STOP");
  uint32_t restore_start=a->ticks();int restored;

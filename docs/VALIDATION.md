@@ -28,3 +28,13 @@ Public tests cover TLE input/age/checksum/atomic replacement and the actual C or
 Before relying on tracking, record your initial VFO frequencies/modes/SPLIT, launch the app, check GPS/UTC and corrected frequencies, then STOP and compare the restored settings. Confirm receive operation before an operator-controlled TX check. Do not start or stop a firmware update as part of an application test.
 
 The original issue where power-on required battery removal after an app session was investigated during development. Later standalone builds were reported to shut down/restart normally after completed STOP. This history is not a guarantee for a different firmware, app build, or interrupted STOP.
+
+## 0.16.0 startup changes
+
+The ARM application builds within the ICAP memory budget. Thirteen host tests pass, including a mocked startup state machine exercising six scenarios: fresh, two-day-old, expired and missing elements, missing GPS, and STOP during initialization. These tests assert that control starts only after pass search and restoration is skipped when no radio settings were captured. They do not exercise real GPS, networking or RF hardware. The local Unicorn runner exited abnormally on this host, so no ARM-emulation success is claimed for this version. Device verification remains pending.
+
+## Experimental network probe
+
+Twenty-seven host test methods pass. Network tests exercise HTTP fragmentation/framing, checksums, duplicate rejection and mocked transport cleanup for success, offline, connect/send/receive failures, cancellation, fallback and timeout. Static audits match the pinned v8/v14 callback tables. The ARM probe builds with 56,420 code bytes and 2,972 BSS bytes inside the loader memory window. No device HTTPS, certificate-authentication or native display integration result is claimed.
+
+A live CelesTrak response (168-byte body) was downloaded on the development computer and accepted by the same C streaming parser with 17-byte fragmentation. This tests server-format compatibility, not the radio socket/TLS implementation.
