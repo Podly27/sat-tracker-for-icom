@@ -92,3 +92,7 @@ The owner reports a full-radio freeze on STOP with 0.21.0. The earlier 310 ms si
 This candidate removes native UI notifications, forced redraw writes and replay of saved visibility/update flags from STOP. It clears owned characters only and retains the normal 50 ms radio-restore poll interval. Host tests cover no native notification/log/sleep during display teardown and preserve all fields other than owned characters, including native content after ownership changes. Thirty-eight methods pass.
 
 Compiled ARM tests execute actual display publication and radio-control/session code with private v8 firmware, mocked orbit/SD/clock and CI-V responses. Two A/B and SPLIT configurations each restored original frequencies, modes, selection and SPLIT, blanked owned text, and returned 1,550 simulated ms after STOP. Each run executed 11 native notifications while running and asserted zero native notifications after STOP. Observed stack use was 6,640/8,192 bytes. These checks cannot reproduce real UI scheduling, native rendering or hardware deadlocks. On-radio confirmation is required.
+
+### Hardware feedback — 2026-11-21
+
+After installing SAT 0.22.0, the owner confirms that STOP no longer freezes the radio and that everything works as expected. This confirms the reported outcome on that IC-705/v8 setup; the exact native UI failure mechanism has not been isolated.
