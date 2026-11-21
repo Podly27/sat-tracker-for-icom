@@ -1,9 +1,9 @@
 {
-  "version": "0.33.0",
+  "version": "0.34.0",
   "display_name": "SAT",
-  "code_bytes": 73600,
+  "code_bytes": 73656,
   "bss_bytes": 7948,
   "stack_bytes": 8192,
   "target": "IC-705 705E140 / SQ6EMM 20261119v8, ICAP ABI3 build07051405",
-  "sha256": "64c421889c0a801b5c7fce3cb59629eb7bfda018888639ec2e061ef855df8616"
+  "sha256": "2865684141220b90eaa7c330127b6c377bfa61d42d3995ce68947fc433993999"
 }

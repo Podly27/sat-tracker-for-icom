@@ -52,7 +52,7 @@ int aprs_status_supported(Api*a){
 int aprs_status_publish(const char*s){
  uint8_t text[13];unsigned n=0;while(s[n]&&n<13){if((unsigned char)s[n]<32||(unsigned char)s[n]>126)return -1;text[n]=s[n];n++;}
  if(s[n]||!n)return -1;for(unsigned i=n;i<13;i++)text[i]=' ';
- unsigned c=lock();
+ unsigned c=lock();int changed=!active||memcmp(text,last,13);
  if(active&&CACHE[0x50]){unlock(c);return -2;}
  if(active){for(unsigned i=0;i<13;i++)if(CACHE[0x2e + i]!=last[i]){unlock(c);return -2;}}
  int held=active&&CACHE[2]==7&&(CACHE[6]&2);
@@ -71,7 +71,8 @@ int aprs_status_publish(const char*s){
   if(!hold_owned){prior_hold=CACHE[4]|(CACHE[5]<<8);hold_owned=1;RX_SCROLL[0]&=~2;RX_SCROLL[1]=0;RX_SCROLL_ELAPSED=0;}
   CACHE[4]=CACHE[5]=255;RX_ELAPSED=0;
  }else CACHE[0]|=0x20;
- CACHE[0x51]|=8;unlock(c);dirty();return 0;
+ int notify=changed||!held;
+ if(notify)CACHE[0x51]|=8;unlock(c);if(notify)dirty();return 0;
 }
 int aprs_status_end_trace(void (*trace)(unsigned)){
  if(trace)trace(2);

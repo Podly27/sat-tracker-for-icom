@@ -31,7 +31,8 @@ int main(void){Api a={0};assert(aprs_status_supported(&a));
  /* Simulate native acknowledgement and its RX hold before scrolling. */
  test_cache[0]&=~0x20;test_cache[2]=7;test_cache[6]=2;test_cache[4]=0xf4;test_cache[5]=1;
  test_scroll[0]=3;test_scroll[1]=14;test_scroll_elapsed=200;
- for(unsigned i=0;i<8;i++){test_rx_elapsed=501;assert(!aprs_status_publish(i<4?"WAIT ISS     ":"ISS 7m       "));assert(!test_rx_elapsed&&!(test_cache[0]&0x20));assert(test_cache[4]==255&&test_cache[5]==255);assert(test_scroll[0]==1&&!test_scroll[1]&&!test_scroll_elapsed);}
+ count=notifications;test_cache[0x51]&=~8;
+ for(unsigned i=0;i<8;i++){test_rx_elapsed=501;assert(!aprs_status_publish(i<4?"WAIT ISS     ":"ISS 7m       "));assert(!test_rx_elapsed&&!(test_cache[0]&0x20));assert(test_cache[4]==255&&test_cache[5]==255);assert(test_scroll[0]==1&&!test_scroll[1]&&!test_scroll_elapsed);assert(notifications==count+(i>=4));if(i<4)assert(!(test_cache[0x51]&8));}
  test_rx_elapsed=123;memcpy(before,(const void*)test_cache,202);count=notifications;
  assert(!aprs_status_release());assert(test_rx_elapsed==123&&notifications==count);
  for(unsigned i=0;i<202;i++)assert(test_cache[i]==(i>=0x2e&&i<0x3b?' ':i==4?0xf4:i==5?1:before[i]));
