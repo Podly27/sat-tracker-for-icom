@@ -2,6 +2,7 @@
 #include "catalog.h"
 #include "gps.h"
 #include "tuner.h"
+#include "civ_queue.h"
 #include "sat_control.h"
 #include "radio_session.h"
 #include "pass_status.h"
@@ -66,7 +67,15 @@ int app_main(Api*a){
   if(p->tone)snprintf(lines[6],32,"CTCSS %u.%u Hz / priority %u",p->tone/10,p->tone%10,(unsigned)active+1);
   else snprintf(lines[6],32,"No CTCSS / priority %u",(unsigned)active+1);
   lines[7][0]=0;if(strstr(bridge,"STOP:")||strstr(bridge,"ERROR")||strstr(bridge,"SAVE:"))snprintf(lines[7],32,"%s",bridge);
-  for(unsigned i=0;i<8;i++)show(i,lines[i]);satellite_display_text(lines[5]);a->sleep(100);
+  if(captured<0&&strstr(bridge,"CIV BUSY"))snprintf(lines[6],32,"%s",civ_busy_status());
+  for(unsigned i=0;i<8;i++)show(i,lines[i]);
+  if(captured<0)satellite_display_pages("SAVE FAILED","CHECK SAT APP");
+  else if(!captured)satellite_display_text(strstr(bridge,"WAIT CI-V")?"CI-V WAIT":"SAVE RADIO");
+  else if(lines[7][0])satellite_display_pages("TUNING STOP","CHECK SAT APP");
+  else if(switch_wait){char label[14];snprintf(label,14,"%s WAIT",satellites[desired].name);satellite_display_pages(label,"RELEASE PTT");}
+  else if(planning&&!p->done)satellite_display_text("FIND PASSES");
+  else{char pages[2][14];unsigned n=pass_status_pages(pages,p->name,now,p->aos,p->los,q.el>=0,1);satellite_display_pages(pages[0],n>1?pages[1]:0);}
+  a->sleep(100);
  }
  a->clear();show(0,"SAT / STOP");show(2,"1 Drain radio commands");
  if(session)sat_control_finish(a);

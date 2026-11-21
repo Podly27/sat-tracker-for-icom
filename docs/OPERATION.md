@@ -12,15 +12,19 @@ Requires IC-705 E with SQ6EMM `705E140_20261119v8`. Other firmware versions are 
 
 The Apps window shows the satellite name, UTC/GPS status, azimuth from true north, elevation, distance, RX/TX frequencies, pass status and tone. `Waiting for GPS` precedes a valid position. `Waiting for SO-131 DD.MM. HH:MM` gives the next AOS in UTC; `SO-131 pass: N min left` rounds remaining time up. Horizon estimates use 30-second sampling.
 
-The same waiting/pass message scrolls through the native 13-character receiver-status field below the main frequency. The radio adds `RX:` itself. Native status publication pauses during TX/non-FM; it is not a received-signal or successful-contact indicator. The ordinary modulation label remains FM, not SAT. There is no DECODE-area overlay or graphical compass.
+The native receiver-status field below the main frequency uses fixed pages of at most 13 characters, alternating every 1.5 seconds without scrolling. Examples: `WAIT SO-131` / `21.11 15:20Z`, or `SO-131 PASS` / `LEFT 7 MIN`. `Z` means UTC. GPS waiting is `WAIT FOR GPS`. The radio adds `RX:` itself. Native status publication pauses during TX/non-FM; it is not a received-signal or successful-contact indicator. The ordinary modulation label remains FM, not SAT. There is no DECODE-area overlay or graphical compass.
 
-A visible satellite wins over a future one. Overlaps use the first enabled configuration row. Otherwise the earliest AOS wins. A pending satellite switch waits until RX; `NAME waits for RX` identifies that destination. Orbital availability, geometric visibility and actual repeater operation are separate things.
+A visible satellite wins over a future one. Overlaps use the first enabled configuration row. Otherwise the earliest AOS wins. A pending satellite switch waits until RX; the Apps window identifies that destination. Orbital availability, geometric visibility and actual repeater operation are separate things.
 
 ## Doppler and transmission
 
 RX control periodically updates both frequencies using owned CI-V request/readback cycles. During operator-controlled TX, only the verified uplink frequency is changed; no VFO/mode/tone/SPLIT configuration changes are made. The app never keys PTT. A/B swap, manual frequency edits or mismatched readback can stop automatic control; STOP and restart establish a new session.
 
 SO-50's separate 74.4 Hz activation remains manual. AO-91's default is no CTCSS and sunlight-only operation; no eclipse filter is implemented. See [profile notes](CONFIG.md).
+
+## Startup CI-V waiting
+
+A transient busy reply during the original-setting snapshot is retried for at most 1.5 seconds for that command. The app does not clear native queue bytes, discard unknown replies or force UART idle. During the snapshot, the native field says `SAVE RADIO` or `CI-V WAIT`; normal pass pages start only after capture succeeds. A sustained busy state blocks tuning and produces `SAVE FAILED` / `CHECK SAT APP`. The Apps window retains the full error and a compact read-only transport snapshot: `Q` is queued request, `R` reply-ready, `C` parser count and `U` the nine UART-state bytes in hexadecimal. Unsupported bindings are a separate error. Restore behavior does not acquire these startup retries or extra STOP delays.
 
 ## EXIT and STOP
 

@@ -29,3 +29,15 @@ class PassStatusTests(unittest.TestCase):
  def test_past_aos_and_name_parameter(self):
   self.assertEqual(self.status(1000,aos=900),'Finding next ISS pass')
   self.assertEqual(self.status(1000,los=1060,visible=1,name=b'SO-50'),'SO-50 pass: 1 min left')
+
+ def test_fixed_native_pages(self):
+  fn=self.lib.pass_status_pages;fn.argtypes=[C.c_void_p,C.c_char_p,C.c_uint32,C.c_uint32,C.c_uint32,C.c_int,C.c_int];fn.restype=C.c_uint
+  def pages(name,now,aos=0,los=0,visible=0,complete=1):
+   out=C.create_string_buffer(28);count=fn(out,name,now,aos,los,visible,complete);result=[out.raw[i*14:(i+1)*14].split(b'\0')[0].decode()for i in range(count)];self.assertTrue(all(len(s)<=13 for s in result));return result
+  now=self.utc('2026-11-21T12:00');aos=self.utc('2026-11-21T15:20')
+  self.assertEqual(pages(b'SO-131',now,aos),['WAIT SO-131','21.11 15:20Z'])
+  self.assertEqual(pages(b'SO-131',now,los=now+61,visible=1),['SO-131 PASS','LEFT 2 MIN'])
+  self.assertEqual(pages(b'AO-123',now,visible=1),['AO-123 PASS','FINDING LOS'])
+  self.assertEqual(pages(b'ISS',now,los=now,visible=1),['ISS PASS','PASS ENDING'])
+  self.assertEqual(pages(b'ISS',now),['NO PASS 24H'])
+  self.assertEqual(pages(b'ISS',now,complete=0),['FIND PASSES'])

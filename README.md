@@ -1,6 +1,6 @@
 # SAT for IC-705
 
-An experimental FM satellite tracker running directly on the Icom IC-705 from its microSD card. It uses internal GPS, refreshes outdated TLE data over the internet, predicts passes and applies RX/TX Doppler correction using VFO A/B and SPLIT. Status appears below the frequency. STOP restores the original radio settings; the app never keys PTT. Includes **ISS, SO-50, AO-91, AO-123 and SO-131**. [SAT.CFG](docs/CONFIG.md) selects up to eight profiles; the earliest pass wins and overlaps follow list order.
+An experimental FM satellite tracker running directly on the Icom IC-705 from its microSD card. It uses internal GPS, refreshes outdated TLE data over the internet, predicts passes and applies RX/TX Doppler correction using VFO A/B and SPLIT. Short status pages alternate every 1.5 seconds below the frequency. STOP restores the original radio settings; the app never keys PTT. Includes **ISS, SO-50, AO-91, AO-123 and SO-131**. [SAT.CFG](docs/CONFIG.md) selects up to eight profiles; the earliest pass wins and overlaps follow list order.
 
 ## Install
 

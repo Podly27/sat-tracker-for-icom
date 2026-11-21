@@ -5,6 +5,10 @@
 /* Native ICAP callback indexes VFO cache by this byte, with >1 denoting
  * unsupported context. Pin callback instructions/literals before reading.
  */
+#ifdef ISS_HOST_TEST
+extern int test_selected(void);
+static int selected(void){return test_selected();}
+#else
 static int selected(void){
  const uint16_t *p=(const uint16_t*)0x2037bac8;
  if(p[0]!=0xb510||p[1]!=0x210c||p[2]!=0x4604||
@@ -12,9 +16,10 @@ static int selected(void){
     *(const uint32_t*)0x2037bb24!=0x203ebc2e)return -1;
  unsigned n=*(volatile const uint8_t*)0x203806f9;return n<=1?(int)n:-1;
 }
+#endif
 static CivOwned request;
-static uint32_t saved[2][6],at;
-static unsigned original,phase_index,waiting,complete,failed,restoring,changed_selection;
+static uint32_t saved[2][6],at,busy_since;
+static unsigned original,phase_index,waiting,complete,failed,restoring,changed_selection,busy_wait;
 static const char*message="SAVE: NOT STARTED";
 const char *radio_session_status(void){return message;}
 int radio_session_saved(void){return complete;}
@@ -31,7 +36,17 @@ static int wait_reply(Api*a){
 }
 static int submit(Api*a,unsigned field,uint32_t value,int read){
  int r=read?civ_setting_read(&request,field):civ_setting_write(&request,field,value);
- if(r){failed=1;message="RESTORE/SAVE: CIV BUSY";return -1;}
+ if(r){
+  /* A transient foreign request must not poison the whole startup snapshot.
+   * Do not clear/release any transport state which we do not own. */
+  if(r==-1&&!restoring){
+   if(!busy_wait){busy_wait=1;busy_since=a->ticks();}
+   if(a->ticks()-busy_since<1500){message="SAVE: WAIT CI-V";return 0;}
+  }
+  failed=1;message=r==-1?"RESTORE/SAVE: CIV BUSY":"RESTORE/SAVE: UNSUPPORTED";return -1;
+ }
+ busy_wait=0;
+ if(!read&&field==CIV_SELECT&&!restoring)changed_selection=1;
  waiting=1;at=a->ticks();return 0;
 }
 static int in_rx(Api*a){RadioState r={0};return a->radio_state(&r)==0&&!r.tx;}
@@ -39,14 +54,14 @@ int radio_session_capture(Api*a){
  if(complete)return 1;
  if(failed)return -1;
  if(!in_rx(a)){message="SAVE: WAIT FOR RX";return 0;}
- if(!phase_index&&!waiting){int n=selected();if(n<0){failed=1;message="SAVE: USE VFO A/B";return -1;}original=n;}
+ if(!phase_index&&!waiting&&!busy_wait){int n=selected();if(n<0){failed=1;message="SAVE: USE VFO A/B";return -1;}original=n;}
  if(waiting){int r=wait_reply(a);if(r<=0)return r;
   if(phase_index%7){unsigned v=phase_index/7,f=phase_index%7-1;saved[v][f]=request.read_value;}
   phase_index++;
  }
  if(phase_index<14){unsigned v=phase_index/7,f=phase_index%7;
   message="SAVING ORIGINAL SETTINGS";
-  if(!f){changed_selection=1;return submit(a,CIV_SELECT,v,0);}
+  if(!f)return submit(a,CIV_SELECT,v,0);
   return submit(a,f-1,0,1);
  }
  if(phase_index==14){message="SAVE: RETURNING VFO";return submit(a,CIV_SELECT,original,0);}

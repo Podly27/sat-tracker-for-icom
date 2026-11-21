@@ -39,7 +39,8 @@ static int publish(const uint8_t *payload,unsigned length){
  * Keep every existing busy guard until the real idle state is known. */
 const char *civ_busy_status(void){
  static char text[32];
- snprintf(text,sizeof(text),"BUSY Q%u U%u/%u/%u C%u",(unsigned)q[1],(unsigned)uart[0],(unsigned)uart[1],(unsigned)uart[3],(unsigned)*counter);
+ snprintf(text,sizeof(text),"Q%XR%XC%02X U%02X%02X%02X%02X%02X%02X%02X%02X%02X",(unsigned)q[1],(unsigned)q[0x103],(unsigned)*counter,
+  (unsigned)uart[0],(unsigned)uart[1],(unsigned)uart[2],(unsigned)uart[3],(unsigned)uart[4],(unsigned)uart[5],(unsigned)uart[6],(unsigned)uart[7],(unsigned)uart[8]);
  return text;
 }
 int civ_read_probe_begin(void){static const uint8_t read[]={3};return publish(read,1);}

@@ -19,3 +19,17 @@ void pass_status_format(char*out,size_t size,const char*name,uint32_t now,uint32
  }else if(complete)snprintf(out,size,"No %s pass in next 24 hours",name);
  else snprintf(out,size,"Finding next %s pass",name);
 }
+
+unsigned pass_status_pages(char pages[2][14],const char*name,uint32_t now,uint32_t aos,uint32_t los,int in_range,int complete){
+ pages[0][0]=pages[1][0]=0;
+ if(in_range){
+  snprintf(pages[0],14,"%s PASS",name);
+  if(!los)snprintf(pages[1],14,"FINDING LOS");
+  else if(los<=now)snprintf(pages[1],14,"PASS ENDING");
+  else snprintf(pages[1],14,"LEFT %lu MIN",(unsigned long)((los-now)/60+((los-now)%60!=0)));
+  return 2;
+ }
+ if(aos>now){unsigned day,month;date(aos,&day,&month);snprintf(pages[0],14,"WAIT %s",name);
+  snprintf(pages[1],14,"%02u.%02u %02u:%02uZ",day,month,(unsigned)((aos/3600)%24),(unsigned)((aos/60)%60));return 2;}
+ snprintf(pages[0],14,complete?"NO PASS 24H":"FIND PASSES");return 1;
+}

@@ -21,7 +21,7 @@ SO-131,101101,436.888,145.925,0
 - Ended passes are recalculated individually, preserving predictions for other satellites. Major time/location changes and hourly refreshes recalculate the full set. Searching is cooperative, not one long uninterruptible loop.
 - Missing, invalid or older-than-seven-day orbital records are excluded. Startup reports how many configured satellites have usable data. Visibility predicts geometry, not signal strength or repeater availability.
 
-Both the Apps window and the scrolling native field below the frequency identify the selected satellite. VFO A is always RX and B is always TX, including AO-91's reversed U/V bands. The radio's own `RX:` label remains. The original radio settings are captured once per app session and restored on STOP, not recaptured after each satellite change.
+Both the Apps window and the fixed-page native field below the frequency identify the selected satellite. VFO A is always RX and B is always TX, including AO-91's reversed U/V bands. The radio's own `RX:` label remains. The original radio settings are captured once per app session and restored on STOP, not recaptured after each satellite change.
 
 ## Add another satellite
 

@@ -23,6 +23,8 @@ int catalog_choose(uint32_t n){(void)n;assert(scans>=3);return 0;}
 int catalog_orbit(const Satellite*p,Orbit*o){o->epoch=p->epoch;return 0;}
 int orbit_look_profile(Orbit*o,uint32_t n,double la,double lo,double al,uint32_t d,uint32_t u,Look*q){(void)o;(void)n;(void)la;(void)lo;(void)al;*q=(Look){0,-10,1000,0,(int32_t)d,(int32_t)u};return 0;}
 int gps_read(GpsPosition*p){*p=(GpsPosition){0,0,fix};return fix?GPS_OK:GPS_NO_FIX;}
+const char*civ_busy_status(void){return "TEST BUSY STATE";}
+void satellite_display_pages(const char*a,const char*b){assert(a&&strlen(a)<=13&&(!b||strlen(b)<=13));}
 void satellite_display_begin(Api*a){(void)a;}void satellite_display_text(const char*s){(void)s;}
 void satellite_display_end(void){assert(!commands||controller_finished);display_closed=1;}
 int sat_control_profile(Api*a,uint32_t d,uint32_t u,unsigned tone){(void)a;assert(d==437800000&&u==145990000&&tone==670);profiles++;return 0;}
