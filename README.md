@@ -4,9 +4,9 @@ Experimental FM satellite tracking directly on the **Icom IC-705**. Current rele
 
 SAT uses internal GPS, refreshes orbital data over Wi-Fi, selects passes and applies RX/TX Doppler correction with VFO A/B, SPLIT and CTCSS. It includes **ISS, SO-50, AO-91, AO-123 and SO-131**; [configuration order](docs/CONFIG.md) sets priority for overlapping passes. **SAT never keys PTT.** Use STOP to end tracking and restore the saved radio settings.
 
-![SAT 0.42 displaying readable ISS tracking messages and the combined Up/Down link line in FM](docs/images/sat-ic705.png)
+![SAT 0.42 tracking ISS in FM with the radio spectrum, pass countdown and combined Up/Down link line](docs/images/sat-ic705.png)
 
-*SAT 0.42 on the owner's IC-705 in FM: readable status messages, azimuth, elevation, distance and the combined Up/Down link line (uplink first). The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
+*SAT 0.42 tracking ISS on the owner's IC-705 in FM, with the radio's spectrum above SAT DECODE. The text shows the remaining pass time and the combined Up/Down link line (uplink first). The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
 
 ## Display
 
