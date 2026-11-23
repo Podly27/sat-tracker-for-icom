@@ -28,7 +28,7 @@ Messages use natural English without the former `SAT:` prefix. **Up/Down link li
 
 ## Installation
 
-1. Requires the **full SQ6EMM `705E140_20261119v14` firmware** and its matching `ICAPCOLD.BIN` and `ICAPSPOT.BIN` files in `IC-705/Apps/`. Obtain them from the [SQ6EMM firmware project](https://github.com/sq6emm/icom-custom-firmware). Stock Icom firmware, v8 and the earlier experimental MIN builds are not targets of this release. Firmware and runtime files are not distributed here.
+1. Requires the **full SQ6EMM `705E140_20261119v14` firmware** and its matching `ICAPCOLD.BIN` and `ICAPSPOT.BIN` files in `IC-705/Apps/`. Obtain them from the [SQ6EMM firmware project](https://github.com/sq6emm/icom-custom-firmware). Stock Icom firmware and SQ6EMM v8 are not targets of this release. Firmware and runtime files are not distributed here.
 2. Back up your existing SAT application. Copy [SAT.app](sd-card/IC-705/Apps/SAT.app?raw=true) to `IC-705/Apps/` on the microSD card. The filename is case-insensitive on the radio's FAT card; **keep only one copy of SAT**. Check the [SHA-256 sums](sd-card/SHA256SUMS.txt).
 3. For a first installation, also copy [SAT.CFG](sd-card/IC-705/Apps/SAT.CFG?raw=true). When upgrading, **keep your existing SAT.CFG, SAT.TLE and SAT.BAK**. See [configuration](docs/CONFIG.md) and [orbital data updates](docs/TLE.md).
 4. Set the radio clock to **UTC**, enable internal GPS and connect Wi-Fi if orbital data needs updating.
