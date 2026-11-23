@@ -4,9 +4,9 @@ Experimental FM satellite tracking directly on the **Icom IC-705**. Current rele
 
 SAT uses internal GPS, refreshes orbital data over Wi-Fi, selects passes and applies RX/TX Doppler correction with VFO A/B, SPLIT and CTCSS. It includes **ISS, SO-50, AO-91, AO-123 and SO-131**; [configuration order](docs/CONFIG.md) sets priority for overlapping passes. **SAT never keys PTT.** Use STOP to end tracking and restore the saved radio settings.
 
-![SAT 0.40 displaying ISS tracking in SAT DECODE while the IC-705 remains in FM](docs/images/sat-ic705.png)
+![SAT 0.42 displaying readable ISS tracking messages and the combined Up/Down link line in FM](docs/images/sat-ic705.png)
 
-*Photograph of SAT 0.40 on the owner's IC-705 in FM. Version 0.42 uses sentence-case messages and the combined Up/Down link line shown below; a photograph of that version is not yet included. The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
+*SAT 0.42 on the owner's IC-705 in FM: readable status messages, azimuth, elevation, distance and the combined Up/Down link line (uplink first). The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
 
 ## Display
 
@@ -56,7 +56,7 @@ If the radio is transmitting, release PTT before initial setup, satellite switch
 
 ## Status and limitations
 
-The older screenshot confirms the SAT DECODE display in FM on an IC-705, not the new wording on a physical radio. Version 0.42 passed 49 host tests and targeted ARM checks against v14, including its loader, DECODE queue with the combined frequency line, GPS bindings and initial CI-V publication. These do not constitute a complete on-radio validation of every tracking, TX and STOP/restore path.
+The screenshot confirms the new SAT 0.42 messages and combined frequency line in the SAT DECODE display on an IC-705 in FM. Version 0.42 passed 49 host tests and targeted ARM checks against v14, including its loader, DECODE queue with the combined frequency line, GPS bindings and initial CI-V publication. These do not constitute a complete on-radio validation of every tracking, TX and STOP/restore path.
 
 Passes are geometric predictions; repeater availability and operating restrictions are not inferred from TLE data. Review the satellite notes in [configuration](docs/CONFIG.md) before use.
 
