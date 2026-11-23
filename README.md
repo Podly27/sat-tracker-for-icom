@@ -10,7 +10,7 @@ SAT uses internal GPS, refreshes orbital data over Wi-Fi, selects passes and app
 
 ## Display
 
-SAT now uses the radio's native **DECODE window**, through the ICAP interface. No SAT-specific firmware patch or RX status-row modification is required.
+SAT now uses the radio's native **DECODE window**, through the ICAP interface.
 
 Example output:
 
