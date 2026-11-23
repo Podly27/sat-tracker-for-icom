@@ -2,7 +2,7 @@
 
 GPS gives SAT your position; **TLE/OMM records describe the satellites' orbits**. SAT calculates geometric horizon crossings, not optically visible passes. Times in the app are **UTC**; mobile trackers may use local time, a minimum elevation or visibility filters.
 
-At startup SAT refreshes missing records or epochs more than **24 hours** from radio UTC using Wi-Fi. Ordinary catalog numbers use [CelesTrak TLE](https://celestrak.org/NORAD/elements/) with [AMSAT](https://www.amsat.org/tle/current/nasabare.txt) as fallback. Six-digit numbers such as SO-131 use CelesTrak OMM CSV. Restart SAT to request another check; refresh does not run continuously during tracking.
+At startup SAT refreshes missing records or epochs more than **24 hours** from radio UTC using Wi-Fi. Ordinary catalog numbers use [CelesTrak TLE](https://celestrak.org/NORAD/elements/) with [AMSAT](https://www.amsat.org/tle/current/nasabare.txt) as fallback. Six-digit numbers such as SO-131 use CelesTrak OMM CSV. Stop SAT and select its SAT decoder again to request another startup check; refresh does not run continuously during tracking.
 
 Refresh before an operating session, preferably daily. Offline records within **7 days** can be used; older or missing satellites are excluded. Never edit epochs or checksums to make old data look fresh.
 
