@@ -1,12 +1,12 @@
 # SAT Tracker for Icom
 
-Experimental FM satellite tracking directly on the **Icom IC-705**. Current release: **SAT 0.40-DECODE**, for **SQ6EMM firmware `20261119v14` on the IC-705 E (Icom 1.40 base)**. IC-9700 is not currently supported.
+Experimental FM satellite tracking directly on the **Icom IC-705**. Current release: **SAT 0.42-DECODE**, for **SQ6EMM firmware `20261119v14` on the IC-705 E (Icom 1.40 base)**. IC-9700 is not currently supported.
 
 SAT uses internal GPS, refreshes orbital data over Wi-Fi, selects passes and applies RX/TX Doppler correction with VFO A/B, SPLIT and CTCSS. It includes **ISS, SO-50, AO-91, AO-123 and SO-131**; [configuration order](docs/CONFIG.md) sets priority for overlapping passes. **SAT never keys PTT.** Use STOP to end tracking and restore the saved radio settings.
 
 ![SAT 0.40 displaying ISS tracking in SAT DECODE while the IC-705 remains in FM](docs/images/sat-ic705.png)
 
-*SAT DECODE on the owner's IC-705 in FM: pass countdown, azimuth, elevation, distance and Doppler-corrected RX/TX frequencies. The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
+*Photograph of SAT 0.40 on the owner's IC-705 in FM. Version 0.42 uses sentence-case messages and the combined Up/Down link line shown below; a photograph of that version is not yet included. The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
 
 ## Display
 
@@ -15,12 +15,16 @@ SAT now uses the radio's native **DECODE window**, through the ICAP interface.
 Example output:
 
 ```text
-SAT: WAIT SO-131 ON 20:45
-SO-131 AZ123 EL+12 1234km
-RX 436.123456 TX 145.987654
+Starting satellite tracking.
+Waiting for SO-131 until 20:45 UTC.
+Tracking ISS.
+ISS will set in 9 min 59 s.
+Azimuth: 278 deg. Elevation: +5 deg.
+Distance: 1848 km.
+Up/Down link: 145.986682/437.809949 MHz
 ```
 
-State changes are limited to one message per second; tracking details are added every five seconds. DECODE is a scrolling history, not a fixed dashboard: existing lines are not overwritten. During TX the firmware may defer display updates, and its bounded queue can drop messages. The small spectrum and waterfall on the right are the radio's native audio display, not a satellite path plot.
+Messages use natural English without the former `SAT:` prefix. **Up/Down link lists the uplink first and the downlink second**, in MHz. State changes are limited to one message per second; tracking details are added every five seconds. DECODE is a scrolling history, not a fixed dashboard: existing lines are not overwritten. During TX the firmware may defer display updates, and its bounded queue can drop messages. The small spectrum and waterfall on the right are the radio's native audio display, not a satellite path plot.
 
 ## Installation
 
@@ -35,13 +39,24 @@ State changes are limited to one message per second; tracking details are added 
 2. Select **FM** again. The **SAT DECODE** window is used for tracking output; the app's eight-line panel remains available through **MENU → SET → Apps**.
 3. Use the app's **STOP** action to finish tracking and restore its saved settings. Wait for completion before switching off. Do not assume that hiding a window has stopped the background app.
 
+STOP reports its progress separately:
+
+```text
+Stopping satellite tracking.
+Restoring the original radio settings.
+Original settings restored.
+Tracking has stopped.
+```
+
+`Original settings restored.` is emitted only after a successful restoration result. Failure or an unfinished restoration instead reports `Radio settings could not be restored.` Merely seeing a stop request is not confirmation that settings were restored.
+
 Starting SAT directly from Apps without selecting its decoder currently shows a prompt. **Automatic activation of SAT DECODE from an arbitrary mode is not implemented.** Also, the saved settings are those present when SAT captures them: switching through RTTY before starting can change the mode that STOP later restores.
 
 If the radio is transmitting, release PTT before initial setup, satellite switching or restoration. SAT does not transmit an activation carrier or start a transmission on its own.
 
 ## Status and limitations
 
-The screenshot confirms the SAT DECODE display in FM on an IC-705. The release also passed 49 host tests and targeted ARM checks against v14, including its loader, DECODE queue, GPS bindings and initial CI-V publication. These do not constitute a complete on-radio validation of every tracking, TX and STOP/restore path.
+The older screenshot confirms the SAT DECODE display in FM on an IC-705, not the new wording on a physical radio. Version 0.42 passed 49 host tests and targeted ARM checks against v14, including its loader, DECODE queue with the combined frequency line, GPS bindings and initial CI-V publication. These do not constitute a complete on-radio validation of every tracking, TX and STOP/restore path.
 
 Passes are geometric predictions; repeater availability and operating restrictions are not inferred from TLE data. Review the satellite notes in [configuration](docs/CONFIG.md) before use.
 
