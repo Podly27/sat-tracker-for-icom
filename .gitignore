@@ -1,5 +1,5 @@
-# Distribution-only repository: explicitly allow user-facing release files.
-# Development sources, tests, probes, caches and hardware logs stay local.
+# Distribution only: allow just current user-facing release files.
+# Development, analyses, prototypes, runtime, caches and logs stay local.
 /*
 !/.gitignore
 !/README.md
@@ -17,15 +17,29 @@
 !/licenses/SGP4-Unlicense.txt
 !/licenses/Zig-MIT.txt
 !/licenses/musl-COPYRIGHT.txt
+!/licenses/BearSSL-MIT.txt
 !/sd-card/
 /sd-card/*
 !/sd-card/SHA256SUMS.txt
 !/sd-card/IC-705/
 /sd-card/IC-705/*
+!/sd-card/IC-705/README.md
 !/sd-card/IC-705/Apps/
 /sd-card/IC-705/Apps/*
 !/sd-card/IC-705/Apps/SAT.app
 !/sd-card/IC-705/Apps/SAT.CFG
+!/sd-card/IC-9700/
+/sd-card/IC-9700/*
+!/sd-card/IC-9700/README.md
+!/sd-card/IC-9700/Apps/
+/sd-card/IC-9700/Apps/*
+!/sd-card/IC-9700/Apps/SAT.APP
+!/sd-card/IC-9700/Apps/SATUPD.BIN
+!/sd-card/IC-9700/Apps/SATCORE.BIN
+!/sd-card/IC-9700/Apps/SAT.CFG
+!/sd-card/IC-9700/Apps/SATPOS.CFG
+!/sd-card/IC-9700/Apps/SATLIVE.CFG
 !/tools/
 /tools/*
 !/tools/update_tle.py
+!/tools/install_9700.py

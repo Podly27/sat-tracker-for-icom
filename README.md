@@ -1,67 +1,44 @@
 # SAT Tracker for Icom
 
-Experimental FM satellite tracking directly on the **Icom IC-705**. Current release: **SAT 0.42-DECODE**, for **SQ6EMM firmware `20261119v14` on the IC-705 E (Icom 1.40 base)**. IC-9700 is not currently supported.
+FM satellite tracking on **IC-705** and **IC-9700**, using SQ6EMM firmware **20261119v14**. SAT selects a satellite pass, calculates Doppler correction and adjusts the uplink/downlink frequencies. Profiles for ISS, SO-50, AO-91, AO-123 and SO-131 are included.
 
-SAT uses internal GPS, refreshes orbital data over Wi-Fi, selects passes and applies RX/TX Doppler correction with VFO A/B, SPLIT and CTCSS. It includes **ISS, SO-50, AO-91, AO-123 and SO-131**; [configuration order](docs/CONFIG.md) sets priority for overlapping passes. **SAT never keys PTT.** Use STOP to end tracking and restore the saved radio settings.
+**SAT never keys PTT. Use STOP before switching off the radio**, and check that the original frequencies and modes have returned. EXIT only hides the running app.
 
-![SAT 0.42 tracking ISS in FM with the radio spectrum, pass countdown and combined Up/Down link line](docs/images/sat-ic705.png)
+| Radio | Current app | Position / internet | Tracking display | Install and use |
+| --- | --- | --- | --- | --- |
+| IC-705 E, Icom 1.40 base | 0.42-DECODE | Internal GPS / Wi-Fi | SAT DECODE window | [IC-705 guide](sd-card/IC-705/README.md) |
+| IC-9700 E, Icom 1.50 base | 0.64 | Manual position / LAN | Apps panel | [IC-9700 guide](sd-card/IC-9700/README.md) |
 
-*SAT 0.42 tracking ISS on the owner's IC-705 in FM, with the radio's spectrum above SAT DECODE. The text shows the remaining pass time and the combined Up/Down link line (uplink first). The TX indicator shows operator-controlled transmission, not automatic PTT from SAT.*
+The versions are **not interchangeable**. Obtain the matching firmware and ICAP runtime files from [SQ6EMM](https://github.com/sq6emm/icom-custom-firmware); they are not included here. Stock Icom firmware cannot run these apps.
 
-## Display
+## IC-705
 
-SAT now uses the radio's native **DECODE window**, through the ICAP interface.
+![SAT tracking ISS on IC-705](docs/images/sat-ic705.png)
 
-Example output:
+Uses the native scrolling SAT DECODE window for pass information, geometry and uplink/downlink frequencies. The photograph shows operator-controlled TX; SAT does not start transmissions.
 
-```text
-Starting satellite tracking.
-Waiting for SO-131 until 20:45 UTC.
-Tracking ISS.
-ISS will set in 9 min 59 s.
-Azimuth: 278 deg. Elevation: +5 deg.
-Distance: 1848 km.
-Up/Down link: 145.986682/437.809949 MHz
-```
+## IC-9700
 
-Messages use natural English without the former `SAT:` prefix. **Up/Down link lists the uplink first and the downlink second**, in MHz. State changes are limited to one message per second; tracking details are added every five seconds. DECODE is a scrolling history, not a fixed dashboard: existing lines are not overwritten. During TX the firmware may defer display updates, and its bounded queue can drop messages. The small spectrum and waterfall on the right are the radio's native audio display, not a satellite path plot.
+Start **SAT TRACKER** from Apps. It downloads orbital data over LAN, then starts tracking automatically. If the download fails, it tries valid saved data. No separate updater or PC/NAS gateway is needed during operation.
 
-## Installation
+The app uses native SAT/DUAL operation with the downlink on MAIN and uplink on SUB. Doppler correction continues during operator-controlled TX. Position is configured in `SATPOS.CFG`; the display is the Apps panel, not DECODE.
 
-1. Requires the **full SQ6EMM `705E140_20261119v14` firmware** and its matching `ICAPCOLD.BIN` and `ICAPSPOT.BIN` files in `IC-705/Apps/`. Obtain them from the [SQ6EMM firmware project](https://github.com/sq6emm/icom-custom-firmware). Stock Icom firmware and SQ6EMM v8 are not targets of this release. Firmware and runtime files are not distributed here.
-2. Back up your existing SAT application. Copy [SAT.app](sd-card/IC-705/Apps/SAT.app?raw=true) to `IC-705/Apps/` on the microSD card. The filename is case-insensitive on the radio's FAT card; **keep only one copy of SAT**. Check the [SHA-256 sums](sd-card/SHA256SUMS.txt).
-3. For a first installation, also copy [SAT.CFG](sd-card/IC-705/Apps/SAT.CFG?raw=true). When upgrading, **keep your existing SAT.CFG, SAT.TLE and SAT.BAK**. See [configuration](docs/CONFIG.md) and [orbital data updates](docs/TLE.md).
-4. Set the radio clock to **UTC**, enable internal GPS and connect Wi-Fi if orbital data needs updating.
-
-## Start and stop
-
-1. In the mode selector, press **RTTY** repeatedly to select the registered **SAT** decoder (RTTY → RTTY-R → SAT, if SAT is the only installed decoder).
-2. Select **FM** again. The **SAT DECODE** window is used for tracking output; the app's eight-line panel remains available through **MENU → SET → Apps**.
-3. Use the app's **STOP** action to finish tracking and restore its saved settings. Wait for completion before switching off. Do not assume that hiding a window has stopped the background app.
-
-STOP reports its progress separately:
+## Download structure
 
 ```text
-Stopping satellite tracking.
-Restoring the original radio settings.
-Original settings restored.
-Tracking has stopped.
+sd-card/
+  IC-705/          IC-705 guide and Apps/SAT.app, SAT.CFG
+  IC-9700/         IC-9700 guide and its Apps files
+  SHA256SUMS.txt   Checksums for the distributed app/config files
+tools/
+  install_9700.py  First installation / update, including private TLS setup
+  update_tle.py    Optional computer-based orbital update
 ```
 
-`Original settings restored.` is emitted only after a successful restoration result. Failure or an unfinished restoration instead reports `Radio settings could not be restored.` Merely seeing a stop request is not confirmation that settings were restored.
+This repository contains the current app binaries, installation files and short user guides. Development sources, analyses, diagnostic apps and logs remain local.
 
-Starting SAT directly from Apps without selecting its decoder currently shows a prompt. **Automatic activation of SAT DECODE from an arbitrary mode is not implemented.** Also, the saved settings are those present when SAT captures them: switching through RTTY before starting can change the mode that STOP later restores.
+Experimental software, without warranty. Predictions do not confirm that a satellite repeater is operational; check its current operating information before transmitting. The merged IC-9700 startup and STOP restoration have been tested on the owner's radio; this does not validate every operating condition.
 
-If the radio is transmitting, release PTT before initial setup, satellite switching or restoration. SAT does not transmit an activation carrier or start a transmission on its own.
+ICAP and the required firmware are by [Dawid SQ6EMM](https://github.com/sq6emm/icom-custom-firmware). The IC-705 DECODE approach was inspired by [EA5JLJ's SKIM](https://github.com/ea5jlj/skim-ic705).
 
-## Status and limitations
-
-The screenshot confirms the new SAT 0.42 messages and combined frequency line in the SAT DECODE display on an IC-705 in FM. Version 0.42 passed 49 host tests and targeted ARM checks against v14, including its loader, DECODE queue with the combined frequency line, GPS bindings and initial CI-V publication. These do not constitute a complete on-radio validation of every tracking, TX and STOP/restore path.
-
-Passes are geometric predictions; repeater availability and operating restrictions are not inferred from TLE data. Review the satellite notes in [configuration](docs/CONFIG.md) before use.
-
-**Work in progress. Experimental software — use entirely at your own risk. No warranty is provided.**
-
-The DECODE-window approach was inspired by [EA5JLJ's SKIM](https://github.com/ea5jlj/skim-ic705). ICAP and the custom firmware are by [Dawid SQ6EMM](https://github.com/sq6emm/icom-custom-firmware).
-
-[Configuration](docs/CONFIG.md) · [TLE updates](docs/TLE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Checksums](sd-card/SHA256SUMS.txt)
+[Satellite configuration](docs/CONFIG.md) · [Orbital data](docs/TLE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Checksums](sd-card/SHA256SUMS.txt)

@@ -1,29 +1,24 @@
-# Orbital data updates
+# Orbital data
 
-GPS gives SAT your position; **TLE/OMM records describe the satellites' orbits**. SAT calculates geometric horizon crossings, not optically visible passes. Times in the app are **UTC**; mobile trackers may use local time, a minimum elevation or visibility filters.
+Set the radio clock to **UTC**. SAT uses geometric rise/set predictions; these do not indicate optical visibility or repeater availability. Offline records up to **seven days** old can be used; older/missing satellites are excluded.
 
-At startup SAT refreshes missing records or epochs more than **24 hours** from radio UTC using Wi-Fi. Ordinary catalog numbers use [CelesTrak TLE](https://celestrak.org/NORAD/elements/) with [AMSAT](https://www.amsat.org/tle/current/nasabare.txt) as fallback. Six-digit numbers such as SO-131 use CelesTrak OMM CSV. Stop SAT and select its SAT decoder again to request another startup check; refresh does not run continuously during tracking.
+| Radio | Update at startup | Saved files in its Apps folder |
+| --- | --- | --- |
+| IC-705 | Wi-Fi; refreshes missing data or epochs more than 24 hours old, using CelesTrak / AMSAT | `SAT.TLE`, `SAT.BAK` |
+| IC-9700 | LAN; downloads configured satellites from SatNOGS over verified HTTPS, then starts the tracker | `SATN0.TLE`, `SATN1.TLE`; also reads `SAT.TLE`, `SAT.BAK` |
 
-Refresh before an operating session, preferably daily. Offline records within **7 days** can be used; older or missing satellites are excluded. Never edit epochs or checksums to make old data look fresh.
+Updates alternate between cache files and are checked before use. If the network update fails, SAT tries valid saved data. Refresh runs at startup, not continuously during tracking. On IC-9700, stop and restart SAT TRACKER to request another update; on IC-705, stop and select its decoder again.
 
-## Manual update from a computer
+Caches contain combined satellite records: names and two TLE lines, or `CSV,` plus an OMM record. They are generated during use, not supplied as fixed data in the repository. Keep them when upgrading. Do not edit epochs/checksums to make old data look fresh.
 
-Download the repository and run this command from its directory with Python 3 (no extra packages needed):
+## Optional computer update
+
+Python 3, no extra packages:
 
 ```sh
-python3 tools/update_tle.py --max-age-hours 24
+python3 tools/update_tle.py --config /path/to/SD/IC-705/Apps/SAT.CFG --output /path/to/SD/IC-705/Apps/SAT.TLE --max-age-hours 24
 ```
 
-The tool reads `sd-card/IC-705/Apps/SAT.CFG` and writes `SAT.TLE` beside it. Copy that file into `IC-705/Apps/` on the card. Custom paths are also supported:
+For IC-9700, use its `IC-9700/Apps/` paths instead. The script checks all enabled records before replacing its output; unavailable upstream data leaves the old file intact. IC-9700 normally updates directly over LAN and does not need this tool during operation.
 
-```sh
-python3 tools/update_tle.py --config /path/to/SAT.CFG --output /path/to/SAT.TLE --max-age-hours 24
-```
-
-All enabled objects must validate before the computer tool replaces its output. A failed download leaves the previous file intact.
-
-## Files on the card
-
-`SAT.TLE` is a combined cache: each satellite has a name and its original two TLE lines, or `CSV,` followed by the original CelesTrak OMM record for a six-digit catalog number. It is not a pure TLE list for arbitrary third-party trackers.
-
-SAT selects a valid complete bundle from `SAT.TLE` and `SAT.BAK` and writes verified updates to the other slot, preserving the previous source. A successful download may therefore update either file. These operational files are not supplied as fixed data in this repository because they become outdated.
+[IC-705 guide](../sd-card/IC-705/README.md) · [IC-9700 guide](../sd-card/IC-9700/README.md)

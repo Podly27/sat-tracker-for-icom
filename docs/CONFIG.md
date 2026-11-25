@@ -1,6 +1,6 @@
 # SAT.CFG
 
-Edit `IC-705/Apps/SAT.CFG` as plain text while SAT is stopped, then restart it.
+Edit `IC-705/Apps/SAT.CFG` or `IC-9700/Apps/SAT.CFG` as plain text while SAT is stopped, then restart it. IC-9700 also requires your position in `SATPOS.CFG`; see its [installation guide](../sd-card/IC-9700/README.md).
 
 ```text
 # NAME,NORAD,RX_MHz,TX_MHz,CTCSS_Hz
