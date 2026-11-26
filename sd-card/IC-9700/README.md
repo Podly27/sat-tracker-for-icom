@@ -1,5 +1,7 @@
 # IC-9700 — SAT TRACKER 0.64
 
+![SAT TRACKER 0.64 showing satellite pass information on IC-9700](../../docs/images/sat-ic9700.png)
+
 Requires **IC-9700 E / Icom 1.50 base with SQ6EMM 9700E150_20261119v14**, including its matching ICAP runtime files. Obtain these from [SQ6EMM](https://github.com/sq6emm/icom-custom-firmware); they are not included here. This app is not for IC-705.
 
 ## Install

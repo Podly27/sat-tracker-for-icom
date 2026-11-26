@@ -22,6 +22,8 @@ Uses the native scrolling SAT DECODE window for pass information, geometry and u
 
 ## IC-9700
 
+![SAT TRACKER 0.64 running on IC-9700](docs/images/sat-ic9700.png)
+
 Start **SAT TRACKER** from Apps. It downloads orbital data over LAN, then starts tracking automatically. If the download fails, it tries valid saved data. No separate updater or PC/NAS gateway is needed during operation.
 
 The app uses native SAT/DUAL operation with the downlink on MAIN and uplink on SUB. Doppler correction continues during operator-controlled TX. Position is configured in `SATPOS.CFG`; the display is the Apps panel, not DECODE.
