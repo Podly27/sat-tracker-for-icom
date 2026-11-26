@@ -43,3 +43,10 @@
 /tools/*
 !/tools/update_tle.py
 !/tools/install_9700.py
+!/sd-card/IC-705-J/
+/sd-card/IC-705-J/*
+!/sd-card/IC-705-J/README.md
+!/sd-card/IC-705-J/Apps/
+/sd-card/IC-705-J/Apps/*
+!/sd-card/IC-705-J/Apps/SAT.app
+!/sd-card/IC-705-J/Apps/SAT.CFG

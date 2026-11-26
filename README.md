@@ -7,6 +7,7 @@ FM satellite tracking on **IC-705** and **IC-9700**, using SQ6EMM firmware **202
 | Radio | Current app | Position / internet | Tracking display | Install and use |
 | --- | --- | --- | --- | --- |
 | IC-705 E, Icom 1.40 base | 0.42-DECODE | Internal GPS / Wi-Fi | SAT DECODE window | [IC-705 guide](sd-card/IC-705/README.md) |
+| IC-705 J, Icom 1.40 base | **0.42-J1 preview — no physical J test** | Internal GPS / Wi-Fi | SAT DECODE window | [Japanese volunteer build](sd-card/IC-705-J/README.md) |
 | IC-9700 E, Icom 1.50 base | 0.64 | Manual position / LAN | Apps panel | [IC-9700 guide](sd-card/IC-9700/README.md) |
 
 The versions are **not interchangeable**. Obtain the matching firmware and ICAP runtime files from [SQ6EMM](https://github.com/sq6emm/icom-custom-firmware); they are not included here. Stock Icom firmware cannot run these apps.
@@ -16,6 +17,8 @@ The versions are **not interchangeable**. Obtain the matching firmware and ICAP 
 ![SAT tracking ISS on IC-705](docs/images/sat-ic705.png)
 
 Uses the native scrolling SAT DECODE window for pass information, geometry and uplink/downlink frequencies. The photograph shows operator-controlled TX; SAT does not start transmissions.
+
+**IC-705 J volunteers:** the author has only a European IC-705. The [J preview](sd-card/IC-705-J/README.md) passed emulation but has not been run on Japanese hardware; it needs volunteer validation. Use its separate app and matching J runtime bundle.
 
 ## IC-9700
 
@@ -27,7 +30,8 @@ The app uses native SAT/DUAL operation with the downlink on MAIN and uplink on S
 
 ```text
 sd-card/
-  IC-705/          IC-705 guide and Apps/SAT.app, SAT.CFG
+  IC-705/          European IC-705 guide and Apps/SAT.app, SAT.CFG
+  IC-705-J/        Japanese volunteer preview (not hardware-tested)
   IC-9700/         IC-9700 guide and its Apps files
   SHA256SUMS.txt   Checksums for the distributed app/config files
 tools/
