@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install SAT 0.65 on an IC-9700 SD card; never installs or flashes firmware."""
+"""Install SAT 0.66 on an IC-9700 SD card; never installs or flashes firmware."""
 import argparse
 import datetime
 import hashlib
@@ -86,7 +86,7 @@ def install(card):
     atomic_write(dest / 'BSSL.TXT', (ROOT / 'licenses' / 'BearSSL-MIT.txt').read_bytes())
     for name in MODULES:
         atomic_write(dest / name, payloads[name])
-    print('Installed SAT TRACKER 0.65. Firmware/runtime files were not changed.')
+    print('Installed SAT TRACKER 0.66. Firmware/runtime files were not changed.')
     if backup:
         print('Previous app files:', backup)
     print('Set your own position in', dest / 'SATPOS.CFG')

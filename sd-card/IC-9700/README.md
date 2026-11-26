@@ -1,4 +1,4 @@
-# IC-9700 — SAT TRACKER 0.65
+# IC-9700 — SAT TRACKER 0.66
 
 ![SAT TRACKER showing satellite pass information on IC-9700 (0.64 screenshot)](../../docs/images/sat-ic9700.png)
 
@@ -49,7 +49,11 @@ Updates must replace **SAT.APP and both BIN modules together**. Keep your CFG, T
 
 If LAN fails, valid saved data up to seven days old can be used. A first run without internet or saved data cannot track. On an update error, `SATNET.LOG` on the card helps identify the failure; do not share TLS seed files. If “Module missing/invalid” appears, reinstall the complete matching app set.
 
-## Logs in 0.65
+## Changes in 0.66
+
+Only changed Apps rows are sent to the display runtime, including changes to countdowns, frequencies and geometry. Doppler tuning rates and radio-control behavior are unchanged. The existing screenshot above shows 0.64.
+
+## Logs (since 0.65)
 
 At startup, SAT preserves **three previous generations** before replacing the current logs. `1` is the newest archive and `3` the oldest; the oldest is replaced on the next start. There are 21 archive files, with at most about **17 kB of content** in total, plus SD filesystem allocation overhead.
 
@@ -65,6 +69,6 @@ These are short rolling logs, not a complete tuning history. Empty archive files
 
 For a fault report, copy the current logs and archives before further restarts. Include the matching baseline/tag files if requested. **Never share `SATNET.S0` or `SATNET.S1`.** STOP deliberately avoids starting SD writes, so a missing final END line alone does not prove a crash.
 
-Archive rotation was verified on the owner's radio. This update preserves evidence for diagnosing a freeze; it does not claim to fix its cause. The Apps STOP menu can occasionally require repeated taps; the cause is still being investigated. Once STOP is accepted, wait for restoration before switching off.
+Archive rotation was verified on the owner's radio. This update preserves evidence for diagnosing a freeze; it does not claim to fix its cause. Version 0.66 updates only changed Apps rows. The owner reports better menu responsiveness after a radio test, but this does not prove that all missed taps are resolved. Once STOP is accepted, wait for restoration before switching off.
 
 [Configuration](../../docs/CONFIG.md) · [Orbital updates](../../docs/TLE.md) · [Back](../../README.md)
