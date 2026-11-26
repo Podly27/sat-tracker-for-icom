@@ -1,6 +1,6 @@
-# IC-9700 — SAT TRACKER 0.64
+# IC-9700 — SAT TRACKER 0.65
 
-![SAT TRACKER 0.64 showing satellite pass information on IC-9700](../../docs/images/sat-ic9700.png)
+![SAT TRACKER showing satellite pass information on IC-9700 (0.64 screenshot)](../../docs/images/sat-ic9700.png)
 
 Requires **IC-9700 E / Icom 1.50 base with SQ6EMM 9700E150_20261119v14**, including its matching ICAP runtime files. Obtain these from [SQ6EMM](https://github.com/sq6emm/icom-custom-firmware); they are not included here. This app is not for IC-705.
 
@@ -48,5 +48,23 @@ Downlink is on MAIN, uplink on SUB. Doppler correction also runs during operator
 Updates must replace **SAT.APP and both BIN modules together**. Keep your CFG, TLS state and orbital files. The former standalone `SATNET.APP` updater is no longer needed. SAT CHECK and other development tools are not required.
 
 If LAN fails, valid saved data up to seven days old can be used. A first run without internet or saved data cannot track. On an update error, `SATNET.LOG` on the card helps identify the failure; do not share TLS seed files. If “Module missing/invalid” appears, reinstall the complete matching app set.
+
+## Logs in 0.65
+
+At startup, SAT preserves **three previous generations** before replacing the current logs. `1` is the newest archive and `3` the oldest; the oldest is replaced on the next start. There are 21 archive files, with at most about **17 kB of content** in total, plus SD filesystem allocation overhead.
+
+| Current file | Previous generations |
+| --- | --- |
+| `SATNET.LOG` | `SNETL1.LOG` … `SNETL3.LOG` |
+| `SATLIVE.LOG` | `SLIVE1.LOG` … `SLIVE3.LOG` |
+| `SATEVENT.LOG` | `SEVNT1.LOG` … `SEVNT3.LOG` |
+| `SATLV0.BIN`, `SATLV.TAG` | `SBASE1.BIN` … `SBASE3.BIN`, `STAGS1.BIN` … `STAGS3.BIN` |
+| `SATERR.BIN`, `SATTX.LOG` | `SERRS1.BIN` … `SERRS3.BIN`, `STXLG1.LOG` … `STXLG3.LOG` |
+
+These are short rolling logs, not a complete tuning history. Empty archive files mean the corresponding source was unavailable. Snapshots or error records can be older than the latest run; match their tags and baseline identifiers. If archiving reports an error, tracking does not start. Rotation is not atomic during a power interruption.
+
+For a fault report, copy the current logs and archives before further restarts. Include the matching baseline/tag files if requested. **Never share `SATNET.S0` or `SATNET.S1`.** STOP deliberately avoids starting SD writes, so a missing final END line alone does not prove a crash.
+
+Archive rotation was verified on the owner's radio. This update preserves evidence for diagnosing a freeze; it does not claim to fix its cause. The Apps STOP menu can occasionally require repeated taps; the cause is still being investigated. Once STOP is accepted, wait for restoration before switching off.
 
 [Configuration](../../docs/CONFIG.md) · [Orbital updates](../../docs/TLE.md) · [Back](../../README.md)

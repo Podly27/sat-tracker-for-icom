@@ -8,7 +8,7 @@ FM satellite tracking on **IC-705** and **IC-9700**, using SQ6EMM firmware **202
 | --- | --- | --- | --- | --- |
 | IC-705 E, Icom 1.40 base | 0.42-DECODE | Internal GPS / Wi-Fi | SAT DECODE window | [IC-705 guide](sd-card/IC-705/README.md) |
 | IC-705 J, Icom 1.40 base | **0.42-J1 preview — no physical J test** | Internal GPS / Wi-Fi | SAT DECODE window | [Japanese volunteer build](sd-card/IC-705-J/README.md) |
-| IC-9700 E, Icom 1.50 base | 0.64 | Manual position / LAN | Apps panel | [IC-9700 guide](sd-card/IC-9700/README.md) |
+| IC-9700 E, Icom 1.50 base | 0.65 | Manual position / LAN | Apps panel | [IC-9700 guide](sd-card/IC-9700/README.md) |
 
 The versions are **not interchangeable**. Obtain the matching firmware and ICAP runtime files from [SQ6EMM](https://github.com/sq6emm/icom-custom-firmware); they are not included here. Stock Icom firmware cannot run these apps.
 
@@ -22,11 +22,13 @@ Uses the native scrolling SAT DECODE window for pass information, geometry and u
 
 ## IC-9700
 
-![SAT TRACKER 0.64 running on IC-9700](docs/images/sat-ic9700.png)
+![SAT TRACKER on IC-9700 (0.64 screenshot)](docs/images/sat-ic9700.png)
 
 Start **SAT TRACKER** from Apps. It downloads orbital data over LAN, then starts tracking automatically. If the download fails, it tries valid saved data. No separate updater or PC/NAS gateway is needed during operation.
 
 The app uses native SAT/DUAL operation with the downlink on MAIN and uplink on SUB. Doppler correction continues during operator-controlled TX. Position is configured in `SATPOS.CFG`; the display is the Apps panel, not DECODE.
+
+Version **0.65** keeps three previous generations of diagnostic logs with a fixed size limit. Log rotation has been checked on the owner’s IC-9700. Occasional missed taps in the Apps STOP menu remain under investigation.
 
 ## Download structure
 
