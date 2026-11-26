@@ -48,3 +48,9 @@ Experimental software, without warranty. Predictions do not confirm that a satel
 ICAP and the required firmware are by [Dawid SQ6EMM](https://github.com/sq6emm/icom-custom-firmware). The IC-705 DECODE approach was inspired by [EA5JLJ's SKIM](https://github.com/ea5jlj/skim-ic705).
 
 [Satellite configuration](docs/CONFIG.md) · [Orbital data](docs/TLE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Checksums](sd-card/SHA256SUMS.txt)
+
+---
+
+If you enjoy SAT Tracker, you can [buy me a coffee](https://www.buymeacoffee.com/ok2ikt). Completely optional — thanks for your support!
+
+<a href="https://www.buymeacoffee.com/ok2ikt"><img src="docs/images/buy-me-a-coffee.png" alt="Buy me a coffee QR code" width="110"></a>

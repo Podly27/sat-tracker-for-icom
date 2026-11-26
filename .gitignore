@@ -51,3 +51,5 @@
 /sd-card/IC-705-J/Apps/*
 !/sd-card/IC-705-J/Apps/SAT.app
 !/sd-card/IC-705-J/Apps/SAT.CFG
+
+!/docs/images/buy-me-a-coffee.png
