@@ -1,6 +1,6 @@
 # IC-705 — SAT 0.42-DECODE
 
-Requires **IC-705 E / Icom 1.40 base with SQ6EMM 705E140_20261119v14**. Use its matching `ICAPCOLD.BIN` and `ICAPSPOT.BIN` from the [firmware project](https://github.com/sq6emm/icom-custom-firmware). This European app is not for v8, IC-705 J or IC-9700. The [separate J preview](../IC-705-J/README.md) has not been tested on Japanese hardware.
+Requires **IC-705 E / Icom 1.40 base with SQ6EMM 705E140_20261119v14**. Use its matching `ICAPCOLD.BIN` and `ICAPSPOT.BIN` from the [firmware project](https://github.com/sq6emm/icom-custom-firmware). This European app is not for v8, IC-705 J or IC-9700. The [separate J build](../IC-705-J/README.md) was tested on Japanese hardware and confirmed working by Dana VE3DS.
 
 ## Install
 

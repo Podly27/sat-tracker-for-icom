@@ -13,7 +13,7 @@ SO-131,101101,436.888,145.925,0
 
 - `RX_MHz` is the downlink; `TX_MHz` is the uplink. SAT calculates Doppler corrections from these nominal frequencies.
 - `CTCSS_Hz` sets the TX tone; **0 disables it**. RX tone squelch is disabled.
-- Prefix a row with `#` to disable it. Add a satellite by copying a row and entering verified values. Maximum eight enabled profiles; names use 1–6 uppercase letters, digits or hyphens. Only 80–110 minute LEO orbits and cross-band FM between 144–148 and 430–440 MHz are supported. The IC-705 J preview restricts VHF profiles/targets to 144–146 MHz.
+- Prefix a row with `#` to disable it. Add a satellite by copying a row and entering verified values. Maximum eight enabled profiles; names use 1–6 uppercase letters, digits or hyphens. Only 80–110 minute LEO orbits and cross-band FM between 144–148 and 430–440 MHz are supported. The IC-705 J build restricts VHF profiles/targets to 144–146 MHz.
 - Visible satellites take priority over future passes. Overlapping passes use the first enabled row; otherwise the earliest predicted pass wins. Switching satellites waits until RX.
 
 **SO-50:** normal access uses 67 Hz. Its separate 74.4 Hz/two-second activation carrier is operator-managed: STOP SAT before configuring/transmitting it manually, release PTT, then restart SAT. SAT does not transmit an activation carrier.
